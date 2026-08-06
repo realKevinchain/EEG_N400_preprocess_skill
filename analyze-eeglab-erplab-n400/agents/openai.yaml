@@ -1,0 +1,4 @@
+interface:
+  display_name: "EEGLAB ERPLAB N400 Analysis"
+  short_description: "Traceable EEG and N400 analysis workflows"
+  default_prompt: "Use $analyze-eeglab-erplab-n400 to design and quality-check a traceable EEGLAB/ERPLAB N400 analysis."
