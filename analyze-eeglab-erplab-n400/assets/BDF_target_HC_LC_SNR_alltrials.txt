@@ -1,0 +1,39 @@
+bin 1
+HC_-4dB_target_all
+.{111}
+
+bin 2
+HC_-2dB_target_all
+.{112}
+
+bin 3
+HC_+4dB_target_all
+.{113}
+
+bin 4
+HC_+6dB_target_all
+.{114}
+
+bin 5
+HC_quiet_target_all
+.{115}
+
+bin 6
+LC_-4dB_target_all
+.{121}
+
+bin 7
+LC_-2dB_target_all
+.{122}
+
+bin 8
+LC_+4dB_target_all
+.{123}
+
+bin 9
+LC_+6dB_target_all
+.{124}
+
+bin 10
+LC_quiet_target_all
+.{125}

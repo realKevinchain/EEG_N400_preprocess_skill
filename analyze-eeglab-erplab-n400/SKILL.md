@@ -1,51 +1,75 @@
 ---
 name: analyze-eeglab-erplab-n400
-description: Design, implement, audit, and report traceable EEGLAB and ERPLAB ERP pipelines with special support for N400 studies. Use for EEG import and preprocessing, channel locations, referencing, filtering, resampling, bad-channel and artifact handling, ICA, EventList and BinList design, epoching, baseline correction, ERP averaging, data-quality checks, N400 scoring, difference waves, statistics, MATLAB scripting, and methods reporting.
+description: Run, audit, troubleshoot, and document the locked 828update six-stage EEGLAB/ERPLAB N400 preprocessing workflow. Use for N400 EEG import audits, M1/M2 rereferencing before filtering, 0.1–30 Hz filtering at 250 Hz, rank-controlled ICA, post-ICA interpolation and binning, −200 to 0 ms baseline-corrected epochs, manual artifact flags, behavior linkage, ERP averaging, QC, or MATLAB script review.
 ---
 
-# Analyze EEGLAB, ERPLAB, and N400 Data
+# Analyze EEGLAB/ERPLAB N400 with the 828update Workflow
 
-Build an analysis that is reproducible, version-aware, and tied to explicit source evidence. Never turn the book's worked examples into universal defaults.
+Treat 828update as the default executable workflow. Keep general textbook guidance separate from the study-locked implementation, and never silently substitute another ordering or parameter set.
 
-## Classify every recommendation
+## Use the locked six stages
 
-Use these labels in plans, reviews, and reports:
+Run stages in this order:
 
-- `[BOOK]`: stated explicitly in Luck's book; cite the PDF physical page.
-- `[DERIVED]`: logical adaptation of book guidance; state the inference.
-- `[GENERAL]`: broader practice not established by this book; cite an external source when consequential.
-- `[DECIDE]`: requires a study-specific, preferably preregistered decision.
-- `[UNVERIFIED]`: command, parameter, or claim not confirmed; do not execute it as fact.
+1. Audit imported EEG and trialwise behavior alignment.
+2. Review M1/M2 and bad-channel candidates, then apply the final reference.
+3. Resample to 250 Hz and filter EEG/EOG at 0.1–30 Hz; never filter TRIGGER.
+4. Create the 1-Hz/100-Hz ICA training copy, review ±100 µV task segments, compute numerical rank, run extended Infomax with explicit PCA when needed, transfer weights, and remove only reviewed ICs.
+5. Interpolate confirmed bad scalp channels, create EventList and 10 bins, extract one −200 to 800 ms epoch set with mandatory −200 to 0 ms baseline, and write reviewed EEG artifacts to bit 1 without deleting trials.
+6. Write behavior errors to bit 2 in memory, create primary correct-clean and all-clean ERPs, reload-verify them, and generate CZ/centroparietal QC plots.
 
-## Run the workflow
+Read [n400-six-stage-828update.md](references/n400-six-stage-828update.md) before running or changing a stage. It defines the commands, gates, filenames, outputs, and PASS criteria.
 
-1. Collect the study design, recording reference, acquisition rate, file format, event-code dictionary, condition contrast, planned amplitude/latency score, participant population, and installed MATLAB/EEGLAB/ERPLAB versions.
-2. Read [source-map.md](references/source-map.md) and then only the topic references needed for the request. Use the repository's `knowledge/index.md` to open the cited extracted pages when exact wording matters.
-3. Write a decision ledger using [parameter-decisions.md](references/parameter-decisions.md). Leave unresolved choices as `[DECIDE]`; never silently fill them.
-4. Follow [sop.md](references/sop.md). Process one representative participant manually in the Classic GUI, inspect each intermediate dataset, and capture the history before scripting a cohort.
-5. Use [gui-matlab-crosswalk.md](references/gui-matlab-crosswalk.md) to translate verified GUI actions. Run `help <function>` in the installed version before relying on stored argument lists.
-6. Copy `scripts/config_template.m` and edit only the copy. Run `scripts/run_pipeline.m` by stage: `preica`, `train_ica`, then `postica_erp`. Treat component identification as a reviewed human decision between stages.
-7. Apply [quality-control.md](references/quality-control.md) at every gate. Stop when event counts, channel geometry, rank, artifact flags, trial counts, SME, or waveform plausibility fail.
-8. For N400 work, read [n400-design-scoring-statistics.md](references/n400-design-scoring-statistics.md). Derive time windows and electrode regions from the study's independent evidence, not from the example alone.
-9. Copy [methods-report-template.md](assets/methods-report-template.md) and fill every provenance and deviation field. Record current compatibility notes from [version-compatibility.md](references/version-compatibility.md).
+## Prepare a participant
 
-Use `assets/parameter-decision-ledger.csv` and `assets/participant-decisions.csv` as machine-readable companion logs.
+1. Copy `scripts/828update/config_828_subject_template.m` to `config_828_<ID>.m` in the same directory.
+2. Replace the project and EEGLAB TODO paths.
+3. Enter the participant ID and only reviewed participant-specific decisions.
+4. Reload the config before every stage or gate helper.
+5. Write outputs only to `N400_project/result_update/<ID>/`.
 
-## Script guardrails
+Use `scripts/828update/config_828_01B.m` only as a pilot example. T7/T8 are candidates, not automatically confirmed bad channels, and old ICA or epoch decisions must not be copied.
 
-- Start from an EEGLAB `.set` file after importing vendor data interactively; vendor import plugins and options vary.
-- Centralize paths, subject IDs, event/BinList files, channels, time windows, thresholds, and component decisions in the config.
-- Preserve raw data and save new stage-specific datasets. Never overwrite acquisition files.
-- Run the template once per stage. Review ICA maps/time courses and enter component decisions before `postica_erp`.
-- Treat the provided code as a verified structural template, not proof that chosen scientific parameters are appropriate.
-- If an installed function rejects an argument, stop, inspect its local help and GUI history, and record the version-specific change. Do not guess a replacement.
+## Respect the four manual gates
 
-## Reference routing
+- Gate A: set `reference_review_complete=true` only after reviewing M1, M2, all bad-channel candidates, and normal comparisons.
+- Gate B: set `run_ica=true` only after reviewing every ±100 µV rejected task segment and the fixed retained sample.
+- Gate C: set `ica_review_complete=true` only after reviewing maps, spectra, activations, continuous data, and EOG relationships. A reviewed zero-component decision is valid.
+- Gate D: set `artifact_review_complete=true` only after condition-blind review of all epochs and entry of the unified `artifact_bad_epochs` list.
 
-- Full staged procedure: [sop.md](references/sop.md)
-- Parameter choices and alternatives: [parameter-decisions.md](references/parameter-decisions.md)
-- GUI and MATLAB command mapping: [gui-matlab-crosswalk.md](references/gui-matlab-crosswalk.md)
-- N400 design, difference waves, scoring, and statistics: [n400-design-scoring-statistics.md](references/n400-design-scoring-statistics.md)
-- Per-stage validation: [quality-control.md](references/quality-control.md)
-- Book page map and provenance labels: [source-map.md](references/source-map.md)
-- Software-era differences: [version-compatibility.md](references/version-compatibility.md)
+Never claim a stage passed unless its runtime PASS log exists. Static validation is not runtime validation.
+
+## Preserve locked decisions
+
+- Reference before filtering and ICA; average M1/M2 by default, with documented single-side exceptions only.
+- Formal data: 0.1–30 Hz, 250 Hz, bidirectional Butterworth.
+- ICA training: additional 1 Hz high-pass, 100 Hz, task start through target +1 s, ±100 µV complete-segment rule.
+- Epoch: nominal −200 to 800 ms with mandatory −200 to 0 ms baseline.
+- Artifact bit 1: unified reviewed EEG artifact decision.
+- Behavior bit 2: incorrect response.
+- Preserve all 300 physical epochs; use flags for averaging.
+- Do not create an unbaselined formal epoch branch.
+- Do not write to legacy `derivatives/` or `no-ica/` roots.
+
+## Validate before release
+
+Run:
+
+```bash
+python3 scripts/828update/validate_828_static.py
+```
+
+Run MATLAB Code Analyzer on all `.m` files, then complete a real participant pilot through every gate. Confirm reference residuals, EOG/TRIGGER protection, ICA rank, 10×30 bins, 300 baseline-corrected epochs, bit synchronization, and ERP save/reload equality.
+
+## Route supporting questions
+
+- Locked commands and outputs: [n400-six-stage-828update.md](references/n400-six-stage-828update.md)
+- Short phase contract: [sop.md](references/sop.md)
+- Per-stage release checks: [quality-control.md](references/quality-control.md)
+- Parameter provenance and alternatives: [parameter-decisions.md](references/parameter-decisions.md)
+- GUI/MATLAB mapping: [gui-matlab-crosswalk.md](references/gui-matlab-crosswalk.md)
+- N400 scoring and statistics: [n400-design-scoring-statistics.md](references/n400-design-scoring-statistics.md)
+- Book evidence map: [source-map.md](references/source-map.md)
+- Version-specific cautions: [version-compatibility.md](references/version-compatibility.md)
+
+Use `[BOOK]`, `[DERIVED]`, `[GENERAL]`, `[DECIDE]`, and `[UNVERIFIED]` labels when discussing evidence. When the locked 828update implementation differs from a general alternative, state the difference rather than changing the pipeline silently.

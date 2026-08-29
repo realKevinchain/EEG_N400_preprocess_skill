@@ -1,4 +1,4 @@
 interface:
-  display_name: "EEGLAB ERPLAB N400 Analysis"
-  short_description: "Traceable EEG and N400 analysis workflows"
-  default_prompt: "Use $analyze-eeglab-erplab-n400 to design and quality-check a traceable EEGLAB/ERPLAB N400 analysis."
+  display_name: "N400 828update Preprocessing"
+  short_description: "Six-stage EEGLAB/ERPLAB N400 preprocessing"
+  default_prompt: "Use $analyze-eeglab-erplab-n400 to run or audit the 828update six-stage N400 preprocessing workflow."
