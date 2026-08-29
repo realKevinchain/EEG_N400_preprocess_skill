@@ -1,73 +1,88 @@
-# Data Quality Control Checklist
+# 828update Data Quality Checklist
 
-Check every item for every participant unless explicitly marked cohort-level. Store results in a tabular log, not only in prose.
+Store every result in the participant `result_update/<ID>/` QC, table, or log directories. A checked item requires evidence, not only a verbal assertion.
 
-## Import and provenance
+## Stage 1: import and alignment
 
-- [ ] Raw files are unchanged and checksummed or otherwise immutable.
-- [ ] Import plugin, options, file units, acquisition system, reference, sampling rate, and versions are recorded.
-- [ ] Duration, channel count/order, event count, and block boundaries match acquisition/behavioral records.
-- [ ] Stimulus latency correction is based on measured hardware delay; shifted event codes and direction were reviewed.
+- [ ] Raw/vendor data remain unchanged.
+- [ ] Imported SET has 67 channels with unique locked labels.
+- [ ] EEG 1–64 have finite XYZ coordinates and finite samples.
+- [ ] M1/M2/EOG/TRIGGER indices and labels are correct.
+- [ ] Continuous EEG, spectra, triggers, flatlines, saturation, and discontinuities were inspected.
+- [ ] Exactly 300 target codes exist.
+- [ ] Behavior and EEG target codes agree trialwise for all 300 trials.
+- [ ] Channel QC, segment QC, and phase01 PASS log exist.
 
-## Channels, locations, reference, filter, and resampling
+## Stage 2: reference
 
-- [ ] Every EEG label matches the intended coordinate; missing/duplicate coordinates are resolved.
-- [ ] Reference state before and after each re-reference is recorded.
-- [ ] Non-EEG channels excluded from reference/interpolation are documented.
-- [ ] Filter design, half-amplitude cutoffs, order/slope, direction/causality, channels, and DC removal are recorded.
-- [ ] Before/after waveform, spectrum, and impulse-response checks show acceptable distortion.
-- [ ] Resampling target is compatible with timing/frequency goals and anti-aliasing is confirmed.
+- [ ] M1 and M2 were reviewed with candidate and normal-comparison channels.
+- [ ] Confirmed `bad_channels` contain scalp channels only.
+- [ ] Average M1/M2 is used, or a single-side exception reason is recorded.
+- [ ] EEG 1–64 were rereferenced before filtering and ICA.
+- [ ] VEOG, HEOG, and TRIGGER remained pointwise unchanged.
+- [ ] Reference residual meets the script tolerance.
+- [ ] Events, channel labels, and dimensions remained unchanged.
+- [ ] Gate A decision and phase02 PASS log exist.
 
-## Visual EEG and bad channels
+## Stage 3: filtering
 
-- [ ] Continuous EEG viewed at short and long time scales.
-- [ ] Bad channels supported by visual evidence and impact on the planned measure/SME.
-- [ ] Intermittent bad periods distinguished from globally bad channels.
-- [ ] Bad, ignored, reference, EOG, and analysis channels saved per participant.
-- [ ] Interpolation result compared with neighboring channels and key-channel ERP.
+- [ ] Output rate is 250 Hz.
+- [ ] EEG/EOG use 0.1–30 Hz bidirectional Butterworth filtering.
+- [ ] TRIGGER was resampled but not filtered.
+- [ ] Filtering produced no NaN or Inf.
+- [ ] Reference residual and 300 target events remain valid.
+- [ ] Before/after waveforms, spectra, edges, EOG, M1/M2, CZ/CPZ/PZ were inspected.
+- [ ] Filter QC and phase03 PASS log exist.
 
-## ICA
+## Stage 4: ICA
 
-- [ ] Training copy, training filter/rate, excluded channels, removed segments, usable duration, algorithm, and options recorded.
-- [ ] Data rank checked after reference/interpolation/channel removal.
-- [ ] Channel order and `icachansind` match between training and weight-transfer data.
-- [ ] Component scalp maps, time courses, spectra, and EOG relationships reviewed.
-- [ ] Removed components and rationale saved per participant.
-- [ ] Before/after EEG and corrected/uncorrected EOG compared; residual ocular activity and lost brain activity assessed.
+- [ ] Bad scalp channels and the zero single-reference channel are excluded as required.
+- [ ] Training copy uses 1-Hz high-pass and 100 Hz.
+- [ ] Task windows run from trial start through target +1 s.
+- [ ] Every ±100 µV rejected segment and the fixed retained sample were reviewed.
+- [ ] Numerical rank equals the reference/channel-set expectation.
+- [ ] Explicit PCA rank is used when rank is below ICA channel count.
+- [ ] Fixed-seed extended Infomax completed.
+- [ ] Training and target reference, channel order, and `icachansind` match.
+- [ ] IC maps, activations, spectra, continuous data, and EOG relationships were reviewed.
+- [ ] Removed ICs and rationale are recorded; zero removal is explicitly reviewable.
+- [ ] Before/after ICA signals were compared.
+- [ ] Threshold QC and phase04 PASS log exist.
 
-## EventList and BinList
+## Stage 5: interpolation, bins, epochs, and artifacts
 
-- [ ] Boundary codes, string/numeric event conversion, and enable flags inspected.
-- [ ] Representative event sequences manually traced for every bin.
-- [ ] Expected and observed event/bin counts reconciled with behavior.
-- [ ] Correct/incorrect response rules and timing windows validated.
-- [ ] BDF/BinList file is version controlled and exported EventList retained.
+- [ ] Only Gate A bad scalp channels were spherically interpolated.
+- [ ] M1/M2/EOG/TRIGGER were not interpolated.
+- [ ] Invalid ICA matrices were cleared and decision metadata retained.
+- [ ] Ten target bins contain exactly 30 trials each.
+- [ ] Event codes 98/99 do not enter target bins.
+- [ ] One formal epoch dataset contains 300 trials.
+- [ ] Epoch window is nominally −200 to 800 ms at 250 Hz.
+- [ ] Every epoch uses mandatory −200 to 0 ms baseline.
+- [ ] No unbaselined formal epoch branch exists.
+- [ ] All 300 epochs were reviewed condition-blind.
+- [ ] Unified EEG artifact bit 1 agrees across reject, epoch, event, and EVENTLIST.
+- [ ] No trial was physically deleted.
+- [ ] Artifact decisions table and phase05 PASS log exist.
 
-## Epoch, baseline, and artifacts
+## Stage 6: behavior and ERP
 
-- [ ] ERPLAB bin-based epochs used when required by downstream ERPLAB functions.
-- [ ] Epoch bounds, time zero, baseline interval, and edge/boundary handling verified.
-- [ ] Separate artifact flags used for separate artifact types.
-- [ ] Flagged and unflagged trials visually sampled; false positives/negatives assessed.
-- [ ] Accepted/rejected/invalid trials logged by participant and bin.
-- [ ] Rejection rates and artifacts checked for condition confounds.
-- [ ] Participant exclusion follows a criterion fixed before outcome inspection.
+- [ ] Behavior target codes and bins re-match all EEG epochs.
+- [ ] Bit 1 means EEG artifact only.
+- [ ] Bit 2 means behavior error only.
+- [ ] Primary acceptance equals EEG-clean and behavior-correct.
+- [ ] All-clean acceptance equals EEG-clean regardless of behavior.
+- [ ] Ledger and bin summary reconcile every trial and count.
+- [ ] Both ERPs include SEM/dataquality information.
+- [ ] Saved and reloaded bindata, binerror, dataquality, time, and counts are identical.
+- [ ] CZ and centroparietal ROI plots use LC−HC and negative up.
+- [ ] Prestimulus baseline, 300–500 ms morphology, late drift, trial balance, and anomalous conditions were reviewed.
+- [ ] Phase06 PASS log exists.
 
-## Average, N400 score, and statistics
+## Cohort release
 
-- [ ] Prestimulus baselines and early physiologically impossible differences inspected.
-- [ ] Single-participant waveforms, grand averages, difference waves, and scalp distributions are plausible.
-- [ ] aSME/SME inspected for the planned N400 window and ROI, not only default windows.
-- [ ] Difference-wave subtraction order and polarity are explicit.
-- [ ] Score window/ROI overlaid on every participant waveform.
-- [ ] Score table subject/bin/channel ordering matches ERP files and descriptive statistics.
-- [ ] Statistical means reproduce the grand-average pattern; exact equality checked for fixed-window mean amplitude.
-- [ ] Multiplicity, missing data, exclusions, effect estimates, uncertainty, and deviations are reported.
-
-## Cohort release gate
-
-- [ ] Pilot manual and scripted datasets agree for one participant.
-- [ ] Rerunning from unchanged inputs/config produces the same files or numerical scores.
-- [ ] Logs contain software paths/versions, config snapshot, BDF, subject decisions, errors, and completion status.
-- [ ] No placeholder paths, empty condition codes, or unresolved `[DECIDE]` values remain.
-
+- [ ] One representative participant completed every GUI gate and runtime check.
+- [ ] Rerunning unchanged inputs/config does not overwrite outputs.
+- [ ] Every participant has the minimum deliverables listed in the full guide.
+- [ ] No unresolved TODO paths, reference choices, IC decisions, or artifact decisions remain.
+- [ ] No 828update output was written to legacy `derivatives/` or `no-ica/` roots.

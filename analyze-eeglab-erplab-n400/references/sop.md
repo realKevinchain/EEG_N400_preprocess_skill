@@ -1,97 +1,72 @@
-# Phased Analysis SOP
+# 828update Six-Stage SOP
 
-## Contents
+Use this as the short execution contract. Read `n400-six-stage-828update.md` for complete commands, filenames, GUI instructions, and failure handling.
 
-1. Gate 0: study contract
-2. Phase 1: import and audit
-3. Phase 2: pre-ICA preparation
-4. Phase 3: ICA training and application
-5. Phase 4: post-ICA processing and events
-6. Phase 5: epoching and artifact detection
-7. Phase 6: averaging and N400 scoring
-8. Phase 7: statistics and reporting
+## Stage 1: import and alignment audit
 
-## Gate 0: study contract
+1. Import vendor data interactively and save `input_set/<ID>_imported.set/.fdt`.
+2. Preserve 67 channels: EEG 1–64 including M1/M2, VEOG 65, HEOG 66, TRIGGER 67.
+3. Verify unique labels, EEG coordinates, finite samples, continuous waveform quality, and trigger integrity.
+4. Require 300 target events and exact trialwise behavior-code agreement.
+5. Generate channel and one-second segment QC; do not reject automatically.
 
-Record before touching data:
+**Release:** 67 channels, 300 targets, 300 behavior rows, and 300/300 alignment.
 
-- hypotheses, conditions, time-locking events, response rules, and exclusion criteria;
-- acquisition reference/ground, sampling rate, channel montage, EOG channels, display/audio latency measurements;
-- planned N400 contrast direction, scoring method, time window, channels/ROI, baseline, and statistical model;
-- allowable participant-specific choices and how they will be logged;
-- installed MATLAB, EEGLAB, ERPLAB, and plugin versions.
+## Stage 2: reference gate and final rereference
 
-Mark unresolved choices `[DECIDE]`. Do not substitute the book's N400 demonstration parameters.
+1. Generate Gate A QC for M1, M2, configured candidates, and automatic candidates.
+2. Review candidates with FZ/CZ/CPZ/PZ comparisons.
+3. Record scalp `bad_channels`; never include M1/M2/EOG/TRIGGER.
+4. Use average M1/M2 by default. Require a written reason for M1-only or M2-only reference.
+5. Rereference EEG 1–64 only; leave VEOG, HEOG, and TRIGGER unchanged.
+6. Record bad channels now but do not interpolate them.
 
-## Phase 1: import and audit
+**Release:** reference residual within tolerance, auxiliary channels unchanged, events unchanged, and Gate A logged.
 
-1. Preserve vendor files read-only and import through the appropriate EEGLAB plugin.
-2. Save a canonical `.set` file with a new name; record the plugin and import options.
-3. Inspect channel count/order, units, sampling rate, duration, reference state, event types/latencies, boundaries, and block joins.
-4. Plot continuous EEG at short and long scales and inspect spectra.
-5. Verify trigger counts and timing against the behavioral log. Measure and correct hardware stimulus delays only from empirical timing evidence.
+## Stage 3: formal filtering
 
-**Gate:** stop if duration, event counts, reference state, channel labels, or units are unresolved. `[BOOK]` PDF pp. 21–24, 38–41, 364.
+1. Load the rereferenced continuous dataset.
+2. Resample to 250 Hz.
+3. Apply bidirectional Butterworth 0.1-Hz high-pass and 30-Hz low-pass to EEG/EOG only.
+4. Preserve the resampled TRIGGER without filtering.
+5. Compare before/after waveforms, spectra, edges, M1/M2, EOG, and key centroparietal channels.
 
-## Phase 2: pre-ICA preparation
+**Release:** 250 Hz, 300 targets, finite data, preserved labels, reference residual, and unchanged post-resample TRIGGER.
 
-1. Add verified 3-D channel locations and confirm label-to-coordinate matches.
-2. Apply only planned resampling and filtering. Confirm anti-aliasing and inspect filter response/impulse response.
-3. Create bipolar EOG channels if needed while retaining the original monopolar EOG channels for ICA assessment.
-4. Apply an initial single-site reference only if the acquisition system stored effectively unreferenced data; otherwise defer the final reference.
-5. Inspect short and long windows; mark channels to exclude from ICA. Do not interpolate them yet in the book's example workflow.
-6. Save a pre-ICA dataset and participant decision record.
+## Stage 4: rank-controlled ICA
 
-**Gate:** compare before/after spectra and waveforms; confirm locations and data rank; verify no unintended channels were filtered or re-referenced. `[BOOK]` PDF pp. 124, 365–366.
+1. Exclude confirmed bad scalp channels from ICA; exclude the zero reference channel for single-side reference.
+2. Create a 1-Hz/100-Hz training copy from formal data.
+3. Retain each task start through target +1 s and apply the ±100 µV complete-segment rule.
+4. At Gate B, review every rejected segment and the fixed retained sample.
+5. Compute full numerical rank. Require the rank predicted by the reference and channel set.
+6. Run fixed-seed extended Infomax; pass explicit PCA rank when rank is below channel count.
+7. Transfer weights only to the matching reference/channel/order formal dataset.
+8. At Gate C, use ICLabel only as decision support and remove only manually reviewed components.
 
-## Phase 3: ICA training and application
+**Release:** rank and channels recorded, training decisions reproduced, IC decisions documented, and ICA-clean data reload correctly.
 
-1. Make an ICA-training copy of the pre-ICA dataset.
-2. Apply the declared training-only filter/resampling choices; remove breaks and extreme, nonrepresentative discontinuities while retaining ordinary ocular artifacts for ICA to learn.
-3. Exclude bipolar EOG and identified bad channels from ICA training as planned.
-4. Confirm effective rank and enough usable data; run ICA with recorded algorithm/options.
-5. Inspect scalp maps, component activations, spectra, and relationships with EOG. Record components and rationale; do not remove components automatically solely from a label.
-6. Transfer weights to the matching pre-ICA dataset and remove only reviewed artifactual components.
-7. Compare uncorrected and corrected EEG/EOG; verify brain-like activity was not removed.
+## Stage 5: interpolation, bins, baseline epochs, and bit 1
 
-**Gate:** stop if channel order, reference/rank, or `icachansind` differs between training and target data. `[BOOK]` PDF pp. 241–271, 366–368. `[GENERAL]` Also inspect installed EEGLAB ICA documentation.
+1. Interpolate only Gate A bad scalp channels after ICA.
+2. Clear invalid ICA matrices while retaining training and rejection metadata.
+3. Create EventList and the locked HC/LC × five-SNR bins.
+4. Require 30 targets per bin and exclude codes 98/99 from target bins.
+5. Extract one nominal −200 to 800 ms epoch dataset and apply −200 to 0 ms baseline.
+6. Do not create an unbaselined formal epoch dataset.
+7. At Gate D, review all 300 pooled epochs without condition labels.
+8. Synchronize reviewed EEG artifact bit 1 across reject, epoch, event, and EVENTLIST structures without deleting trials.
 
-## Phase 4: post-ICA processing and events
+**Release:** 10×30 bins, 300 physical epochs, baseline mean near zero, synchronized bit 1, and reload equality.
 
-1. Apply the final planned reference.
-2. Interpolate reviewed bad channels, excluding non-EEG channels from interpolation.
-3. Verify bipolar corrected and uncorrected EOG channels as appropriate.
-4. Create EventList; inspect boundaries, event codes, enable flags, and latency differences.
-5. Run BINLISTER using a version-controlled BDF/BinList file. Export and inspect the resulting EventList and per-bin counts.
+## Stage 6: behavior, ERP, and QC
 
-**Gate:** manually trace representative event sequences for every bin; confirm no condition is defined by an unintended response, boundary, or timing rule. `[BOOK]` PDF pp. 45–51, 160–168, 367.
+1. Recheck trialwise behavior code and bin alignment.
+2. Write behavior error bit 2 in the primary in-memory copy.
+3. Average primary ERP from correct and EEG-clean trials.
+4. Average all-clean ERP from every EEG-clean trial.
+5. Write trial ledger and per-bin original/artifact/behavior/accepted counts.
+6. Save and reload both ERPs; require exact bindata, SEM/binerror, dataquality, time, and count equality.
+7. Generate CZ and CZ/CP1/CPZ/CP2/P3/PZ/P4 plots with LC−HC and negative up.
 
-## Phase 5: epoching and artifact detection
-
-1. Use ERPLAB bin-based epoch extraction when the pipeline relies on ERPLAB bins.
-2. Apply the preregistered epoch and baseline. Inspect edge events and confirm time zero.
-3. Start artifact detection with declared starting values, then iteratively inspect flagged/unflagged epochs and tune only under the documented rule.
-4. Use separate flags for distinct artifact types. Preserve counts by participant, bin, and type.
-5. Check that rejection does not create condition-specific trial loss or sensory/behavioral confounds.
-
-**Gate:** inspect continuous and epoched data, flag distributions, accepted/rejected counts, and condition balance. `[BOOK]` PDF pp. 52–57, 196–240, 368.
-
-## Phase 6: averaging and N400 scoring
-
-1. Average accepted epochs, exclude boundary/invalid epochs, and compute data-quality metrics.
-2. Inspect single-participant ERPs before the grand average: prestimulus stability, plausibility, channel neighborhoods, trial counts, and aSME for the planned score window.
-3. Create the prespecified condition difference and confirm its sign convention.
-4. Score every participant using the same algorithm/window/ROI. Visually overlay each score window on each waveform.
-5. Compare descriptive means with grand averages; exact equality is expected for linear fixed-window mean scores, not for nonlinear peak scores.
-
-**Gate:** stop for unexpected polarity, implausible timing, noisy key channels, bin reversal, or score/window mismatch. `[BOOK]` PDF pp. 58–66, 83–90, 272–300.
-
-## Phase 7: statistics and reporting
-
-1. Use the smallest model that directly tests the hypothesis; avoid gratuitous electrode factors and multiplicity.
-2. Verify column/bin ordering against descriptive statistics and grand averages.
-3. Report effect estimates, uncertainty, exact exclusions, retained trials, data quality, all preprocessing parameters, deviations, and software versions.
-4. Archive config, BDF/BinList, participant decision table, scripts, logs, and outputs with checksums when possible.
-
-**Gate:** independently reproduce scores from saved ERP structures and reconcile them with the report. `[BOOK]` PDF pp. 86–90, 97, 299–300, 340.
-
+**Release:** both ERPs reload exactly, counts match the ledger, plots exist, and the runtime PASS log exists.
