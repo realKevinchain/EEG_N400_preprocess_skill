@@ -1,6 +1,6 @@
 ---
 name: analyze-eeglab-erplab-n400
-description: Run, audit, troubleshoot, and document the locked 828update six-stage EEGLAB/ERPLAB N400 preprocessing workflow. Use for N400 EEG import audits, M1/M2 rereferencing before filtering, 0.1–30 Hz filtering at 250 Hz, rank-controlled ICA, post-ICA interpolation and binning, −200 to 0 ms baseline-corrected epochs, manual artifact flags, behavior linkage, ERP averaging, QC, or MATLAB script review.
+description: Run, audit, troubleshoot, and document the locked 828update six-stage EEGLAB/ERPLAB N400 preprocessing workflow and its optional sentence-onset/word-aligned supplemental analysis. Use for N400 EEG import audits, M1/M2 rereferencing before filtering, 0.1–30 Hz filtering at 250 Hz, rank-controlled ICA, post-ICA interpolation and binning, −200 to 0 ms baseline-corrected epochs, manual artifact flags, behavior linkage, ERP averaging, sentence-level visualization, QC, or MATLAB script review.
 ---
 
 # Analyze EEGLAB/ERPLAB N400 with the 828update Workflow
@@ -28,7 +28,9 @@ Read [n400-six-stage-828update.md](references/n400-six-stage-828update.md) befor
 4. Reload the config before every stage or gate helper.
 5. Write outputs only to `N400_project/result_update/<ID>/`.
 
-Use `scripts/828update/config_828_01B.m` only as a pilot example. T7/T8 are candidates, not automatically confirmed bad channels, and old ICA or epoch decisions must not be copied.
+For a config stored in a Drive/Dropbox/iCloud-synced collaboration folder, re-assert `project_root`, `repo_root`, `eeglab_root`, `input_dir`, `behavior_dir`, and `bdf` inside the participant config after running the template. Do not rely on synchronized machine-specific paths remaining unchanged. Read [environment-notes-and-known-issues.md](references/environment-notes-and-known-issues.md) before debugging an apparent path or plugin failure.
+
+Use `scripts/828update/config_828_01B.m` only as a gate-reset pilot example and `config_828_01A.m` only as a completed participant provenance record. Never copy either participant's bad-channel, ICA-component, or bad-epoch decisions into another participant.
 
 ## Respect the four manual gates
 
@@ -71,5 +73,7 @@ Run MATLAB Code Analyzer on all `.m` files, then complete a real participant pil
 - N400 scoring and statistics: [n400-design-scoring-statistics.md](references/n400-design-scoring-statistics.md)
 - Book evidence map: [source-map.md](references/source-map.md)
 - Version-specific cautions: [version-compatibility.md](references/version-compatibility.md)
+- Environment-specific failures and verified fixes: [environment-notes-and-known-issues.md](references/environment-notes-and-known-issues.md)
+- Optional sentence-onset epoch and target-word-aligned display: [sentence-onset-word-aligned-supplemental.md](references/sentence-onset-word-aligned-supplemental.md)
 
 Use `[BOOK]`, `[DERIVED]`, `[GENERAL]`, `[DECIDE]`, and `[UNVERIFIED]` labels when discussing evidence. When the locked 828update implementation differs from a general alternative, state the difference rather than changing the pipeline silently.

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent
 MATLAB = sorted(ROOT.glob("*.m"))
 EXPECTED = {
     "config_828_subject_template.m",
+    "config_828_01A.m",
     "config_828_01B.m",
     "refresh_828_config.m",
     "validate_828_config.m",
@@ -19,6 +20,8 @@ EXPECTED = {
     "phase04_ica.m",
     "phase05_epoch_artifact.m",
     "phase06_average_erp.m",
+    "phaseS1_sentence_epoch.m",
+    "phaseS2_sentence_word_aligned_erp.m",
     "review_phase02_reference_gate.m",
     "review_phase04_threshold_gate.m",
     "review_phase05_artifact_gate.m",
@@ -50,6 +53,8 @@ phase3 = (ROOT / "phase03_filter.m").read_text()
 phase4 = (ROOT / "phase04_ica.m").read_text()
 phase5 = (ROOT / "phase05_epoch_artifact.m").read_text()
 phase6 = (ROOT / "phase06_average_erp.m").read_text()
+phase_s1 = (ROOT / "phaseS1_sentence_epoch.m").read_text()
+phase_s2 = (ROOT / "phaseS2_sentence_word_aligned_erp.m").read_text()
 
 require("cfg.imported_set" in phase2 and "pop_reref" in phase2,
         "Phase 2 does not rereference imported data")
@@ -68,6 +73,20 @@ require("cfg.baseline_ms" in phase5 and "'none'" not in phase5,
 require("cfg.flagged_set" in phase6 and "cfg.primary_erp" in phase6
         and "cfg.allclean_erp" in phase6,
         "Phase 6 dependencies or two ERP outputs are missing")
+require("cfg.interpolated_set" in phase_s1 and "pop_rmbase" in phase_s1,
+        "Supplement S1 must reuse interpolated continuous data and baseline once")
+require("startItems(i+1)-1" in phase_s1 and "isscalar(targetItems)" in phase_s1,
+        "Supplement S1 does not constrain target matching to one sentence trial")
+require("isequal(snr,behavior.snr)" in phase_s1,
+        "Supplement S1 does not verify behavior SNR order")
+require("WORD_ALIGNED_DISPLAY_MS = [-2300 800]" in phase_s2,
+        "Supplement S2 fixed display window changed")
+require("cfg.ledger_csv" in phase_s2 and "PrimaryCorrectClean" in phase_s2,
+        "Supplement S2 must reuse the official Phase 6 ledger")
+require("pop_rmbase" not in phase_s2,
+        "Supplement S2 must not apply a second baseline")
+require('plotBase+".png"' in phase_s2 and 'plotBase+".fig"' in phase_s2,
+        "Supplement S2 overwrite checks must cover both PNG and FIG outputs")
 
 for stage in range(1, 7):
     text = (ROOT / f"phase0{stage}_{['import_audit','reference','filter','ica','epoch_artifact','average_erp'][stage-1]}.m").read_text()
@@ -87,3 +106,4 @@ for directory in ("continuous", "ica", "epochs", "eventlists", "tables",
 print(f"PASS: {len(MATLAB)} MATLAB files validated in {ROOT}")
 print("PASS: independent result_update paths, six-stage dependencies, baseline-only epoching")
 print("PASS: reference-before-filter, rank-controlled ICA, bit-1/bit-2 ERP workflow")
+print("PASS: supplemental sentence epoch and word-aligned display contracts")

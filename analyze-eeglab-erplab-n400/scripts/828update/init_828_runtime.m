@@ -10,9 +10,15 @@ end
 if exist('EEG','var') ~= 1
     eeglab;
 end
-erplabRoot = fullfile(cfg.eeglab_root,'plugins','erplab-master');
 if exist('pop_basicfilter','file') ~= 2
-    addpath(genpath(erplabRoot));
+    pluginsDir = fullfile(cfg.eeglab_root,'plugins');
+    pluginEntries = dir(pluginsDir);
+    isErplabDir = [pluginEntries.isdir] & ...
+        startsWith({pluginEntries.name},'erplab','IgnoreCase',true);
+    assert(any(isErplabDir), ...
+        'No ERPLAB plugin folder found under %s.',pluginsDir);
+    erplabNames = {pluginEntries(isErplabDir).name};
+    addpath(genpath(fullfile(pluginsDir,erplabNames{1})));
 end
 assert(exist('pop_basicfilter','file') == 2);
 assert(exist('pop_epochbin','file') == 2);
