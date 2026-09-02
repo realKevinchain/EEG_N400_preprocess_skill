@@ -24,6 +24,7 @@ run(fullfile(fileparts(mfilename('fullpath')),'init_828_runtime.m'));
 
 % Fixed across all participants -- do not recompute per subject.
 WORD_ALIGNED_DISPLAY_MS = [-2300 800];
+PLOT_Y_LIMITS_UV = [-20 20];
 
 sentDir = fullfile(cfg.result_root,'sentence_epochs');
 epochSetName = sprintf('%s_828update_%s_sentence_epochs_baseline_pre200.set', ...
@@ -43,19 +44,22 @@ snrOrder = ["-4","-2","4","6","quiet"];
 snrFileTag = ["-4dB","-2dB","4dB","6dB","quiet"];
 siteFolders = ["cz","roi"];
 modeFolders = ["all_clean","primary_correct_clean"];
-plotPaths = strings(numel(modeFolders)*numel(siteFolders)*numel(snrOrder)*2,1);
-plotIdx = 0;
+plotPaths = strings(numel(modeFolders)*numel(siteFolders)* ...
+    numel(snrOrder)*2,1);
+plotIndex = 0;
 for m = 1:numel(modeFolders)
     for si = 1:numel(siteFolders)
         for s = 1:numel(snrOrder)
-            plotBase = fullfile(plotsRoot,modeFolders(m),siteFolders(si),snrFileTag(s));
-            plotIdx = plotIdx+1;
-            plotPaths(plotIdx) = plotBase+".png";
-            plotIdx = plotIdx+1;
-            plotPaths(plotIdx) = plotBase+".fig";
+            plotIndex = plotIndex+1;
+            plotPaths(plotIndex) = fullfile(plotsRoot,modeFolders(m), ...
+                siteFolders(si),sprintf('%s.png',snrFileTag(s)));
+            plotIndex = plotIndex+1;
+            plotPaths(plotIndex) = fullfile(plotsRoot,modeFolders(m), ...
+                siteFolders(si),sprintf('%s.fig',snrFileTag(s)));
         end
     end
 end
+assert(plotIndex == numel(plotPaths));
 
 outputs = [{rejectionCsvPath,binSummaryPath,logPath}, cellstr(plotPaths)'];
 present = cellfun(@(p) exist(p,'file') == 2,outputs);
@@ -138,9 +142,11 @@ assert(all(BIN.Original == cfg.expected_trials_per_bin));
 writetable(BIN,binSummaryPath);
 
 localPlotWordAligned(cfg,SENT,relTimes,allCleanBinData, ...
-    BIN.AllCleanAccepted,fullfile(plotsRoot,'all_clean'),'all clean');
+    BIN.AllCleanAccepted,fullfile(plotsRoot,'all_clean'),'all clean', ...
+    PLOT_Y_LIMITS_UV);
 localPlotWordAligned(cfg,SENT,relTimes,primaryBinData, ...
-    BIN.PrimaryAccepted,fullfile(plotsRoot,'primary_correct_clean'),'primary correct clean');
+    BIN.PrimaryAccepted,fullfile(plotsRoot,'primary_correct_clean'), ...
+    'primary correct clean',PLOT_Y_LIMITS_UV);
 
 fid = fopen(logPath,'w');
 fprintf(fid,'Sentence word-aligned ERP (supplemental; not part of the locked six-stage output)\n');
@@ -152,6 +158,8 @@ fprintf(fid,['Word window: %.0f to %.0f ms (fixed across all participants); ' ..
 fprintf(fid,['Coverage tapers toward the edges since sentences differ in length ' ...
     '(max trial coverage=%d, min=%d, out of %d trials).\n'], ...
     max(coverageCount),min(coverageCount),cfg.expected_trials);
+fprintf(fid,'Plot Y limits: %.0f to %.0f uV (fixed for every panel).\n', ...
+    PLOT_Y_LIMITS_UV(1),PLOT_Y_LIMITS_UV(2));
 fprintf(fid,'Artifact/behavior decisions reused from: %s\n',ledgerPath);
 fprintf(fid,'All-clean accepted per bin: %s\n',mat2str(BIN.AllCleanAccepted'));
 fprintf(fid,'Primary accepted per bin: %s\n',mat2str(BIN.PrimaryAccepted'));
@@ -163,7 +171,8 @@ fprintf('Sentence word-aligned ERP complete.\nAll-clean accepted per bin: ');
 fprintf('%d ',BIN.AllCleanAccepted); fprintf('\nPrimary accepted per bin: ');
 fprintf('%d ',BIN.PrimaryAccepted); fprintf('\n');
 
-function localPlotWordAligned(cfg,SENT,relTimes,binData,acceptedN,modeDir,modeLabel)
+function localPlotWordAligned(cfg,SENT,relTimes,binData,acceptedN,modeDir, ...
+    modeLabel,yLimitsUV)
 labels = upper(string({SENT.chanlocs.labels}));
 cz = find(labels == "CZ",1);
 roiNames = ["CZ","CP1","CPZ","CP2","P3","PZ","P4"];
@@ -175,11 +184,14 @@ assert(isscalar(cz) && all(isfinite(roi)));
 czData = squeeze(binData(cz,:,:));
 roiData = squeeze(mean(binData(roi,:,:),1));
 
-localPlotOneSite(cfg,relTimes,czData,'CZ',acceptedN,fullfile(modeDir,'cz'),modeLabel);
-localPlotOneSite(cfg,relTimes,roiData,'CZ/CP/P ROI',acceptedN,fullfile(modeDir,'roi'),modeLabel);
+localPlotOneSite(cfg,relTimes,czData,'CZ',acceptedN, ...
+    fullfile(modeDir,'cz'),modeLabel,yLimitsUV);
+localPlotOneSite(cfg,relTimes,roiData,'CZ/CP/P ROI',acceptedN, ...
+    fullfile(modeDir,'roi'),modeLabel,yLimitsUV);
 end
 
-function localPlotOneSite(cfg,relTimes,source,siteLabel,acceptedN,siteDir,modeLabel)
+function localPlotOneSite(cfg,relTimes,source,siteLabel,acceptedN,siteDir, ...
+    modeLabel,yLimitsUV)
 snrLabels = {'-4 dB','-2 dB','+4 dB','+6 dB','quiet'};
 snrFileTag = {'-4dB','-2dB','4dB','6dB','quiet'};
 if exist(siteDir,'dir') ~= 7, mkdir(siteDir); end
@@ -201,6 +213,8 @@ for s = 1:5
     xline(0,':','Color',[0.35 0.35 0.35]);
     yline(0,':','Color',[0.35 0.35 0.35]);
     xlim([relTimes(1) relTimes(end)]);
+    ylim(yLimitsUV);
+    yticks(yLimitsUV(1):10:yLimitsUV(2));
     set(gca,'YDir','reverse','Box','off','FontSize',13);
     title(sprintf('%s 828update word-aligned ERP (%s) | %s | %s', ...
         cfg.subject,modeLabel,siteLabel,snrLabels{s}),'FontSize',13);

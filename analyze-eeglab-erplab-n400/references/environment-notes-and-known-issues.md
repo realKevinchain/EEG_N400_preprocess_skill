@@ -18,6 +18,12 @@ before assuming it.
 8. [Mixed-text CSV columns](#8-readtable-mis-detects-a-text-column-that-looks-numeric)
 9. [ICLabel Other](#9-iclabels-other-category-is-not-evidence-of-an-artifact-gate-c)
 10. [Peripheral channel review](#10-gate-a-elevated-noise-on-peripheraltemporal-channels-is-not-automatically-a-bad-channel)
+11. [Human-controlled gates](#11-gates-abcd-are-human-decisions--do-not-make-them-yourself-even-with-matlab-batch-access)
+12. [Bad-channel rerun scope](#12-cfgbad_channels-does-not-affect-stage-2-reference-or-stage-3-filter-output)
+13. [PMnotch design requirement](#13-erplabs-pmnotch-filter-silently-no-ops-without-designnotch)
+14. [Narrowband ICA evidence](#14-a-components-peak-iclabel-category--a-spectral-bump-near-a-suspect-frequency-is-not-enough--check-whether-its-actually-narrowband)
+15. [Gate D reject-field audit](#15-gate-d-gui-marks-can-live-in-several-fields--audit-before-copying-epoch-numbers)
+16. [Figure release criteria](#16-fixed-figure-scales-and-sentence-output-completeness-are-release-criteria)
 
 ## 1. The shared config template gets silently overwritten (Google Drive sync)
 
@@ -248,3 +254,125 @@ Gate A. Two checks used in this session to tell the difference:
   contribution regardless of what it was — so a pattern that is purely a
   reference artifact will disappear after Stage 2's rereference, while a
   pattern caused by actual channel-specific noise will not.
+
+## 11. Gates A/B/C/D are human decisions — do not make them yourself, even with MATLAB batch access
+
+Captured 2026-09-02 during 01B. This machine has `/Applications/MATLAB_R2026a.app/bin/matlab
+-batch "..."` available, which makes it possible for an assistant to run every
+phase script end to end without any person present — including generating
+plausible-looking evidence (topography/spectrum PNGs, quantitative summary
+tables) and using it to decide bad channels, IC removal, and bad epochs
+itself. **Do not do this.** The top-level skill instructions and every Gate
+in `sop.md`/`n400-six-stage-828update.md` say these are human decisions for a
+reason (they encode judgment calls — this participant's own instrumentation
+history, tolerance for trial loss, etc. — that are not recoverable from the
+data alone). In this session the assistant ran all four gates itself for 01B
+before the user caught it and required a redo with genuine per-gate review;
+several of the assistant's Gate C calls were also later shown to be
+questionable once the user actually looked (see item 13 below).
+
+The correct pattern per gate, confirmed working with this user:
+1. Run the phase script through the point where it stops for the gate
+   (training copy / icaweights.set / pooled epoch set).
+2. Either (a) generate a quantitative summary + evidence plots and present
+   them for review, or (b) — preferred by this user for Gates C and D
+   specifically — hand back the exact single-line MATLAB commands to open
+   the real EEGLAB review tool themselves (`pop_viewprops` for Gate C,
+   `review_phase05_artifact_gate.m` → `pop_eegplot` for Gate D) in their own
+   MATLAB session.
+3. Wait for the user's actual decision (channel list / IC list / epoch
+   list). Do not treat your own generated evidence as sufficient to decide.
+4. Only then write the decision into `config_828_<ID>.m` with a comment
+   attributing it to the user and citing the evidence file(s) reviewed.
+
+## 12. `cfg.bad_channels` does not affect Stage 2 (reference) or Stage 3 (filter) output
+
+Both `phase02_reference.m` and `phase03_filter.m` operate uniformly over
+`[cfg.eeg_channels cfg.eog_channels]` (or `1:64` for reference) with no
+`bad_channels` branching — a channel later marked bad still gets referenced
+and filtered exactly like every other channel; it is only excluded starting
+at `cfg.ica_channels` (Stage 4) and interpolated at Stage 5. So if a Gate A
+decision changes (e.g. a channel is reclassified as bad) **after** Stage 2/3
+already ran, those two stages' outputs are still valid and do not need to be
+regenerated — only Stage 4 onward (different `ica_channels` set → different
+rank → a genuinely different ICA decomposition with renumbered components,
+which also invalidates any already-made Gate C decision) needs a redo.
+
+## 13. ERPLAB's `PMnotch` filter silently no-ops without `'Design','notch'`
+
+`pop_basicfilter(EEG, chans, 'Filter','PMnotch', 'Cutoff',50, ...)` **appears
+to succeed** (prints "Done. What's next?", returns an EEG struct, no thrown
+error) but leaves the data completely unfiltered if you don't also pass
+`'Design','notch'`. `Design` defaults to `'butter'`; internally
+`filter_tf.m` maps `Design` to a numeric `typef` (0=IIR Butterworth,
+1=FIR, 2=Parks-McClellan notch), and the PMnotch code path only fires when
+`typef==2`. With the default `typef==0` and `locutoff==hicutoff` (which is
+how a PMnotch single-cutoff gets encoded), none of `filter_tf.m`'s branches
+match, so it returns `v=0` ("something is wrong"), and `basicfilter.m`
+surfaces that as a **non-fatal** GUI-style warning
+(`errorfound('Wrong parameters for filtering.', ...)`) rather than an error —
+in `-batch` mode this just prints to the console and execution continues
+with the data untouched. Verified by direct before/after `pwelch` comparison:
+without `'Design','notch'`, 50 Hz power was byte-for-byte unchanged (0.0 dB
+attenuation); with it, attenuation at exactly 50.00 Hz was 56.7 dB (very
+narrow notch — power even 0.5 Hz away is barely touched, so don't expect a
+wide band average like 48-52 Hz to show much effect even when the filter is
+working correctly — check the exact target frequency bin instead). Also note
+`'Cutoff'` for `PMnotch` takes **one** value (the center frequency, e.g.
+`50`), not a `[lo hi]` pair — passing two values errors immediately with a
+clear message, unlike the silent `Design` mistake above.
+
+## 14. A component's "peak ICLabel category + a spectral bump near a suspect frequency" is not enough — check whether it's actually narrowband
+
+During 01B's Gate C, a hypothesis that many removed components reflected a
+specific interference frequency was checked quantitatively rather than
+accepted or rejected on sight: for every component, compute the Welch-PSD
+peak frequency, the -3 dB bandwidth around that peak, and the relative power
+ratio in the suspect band vs the broadband average. Concretely useful
+result: components later confirmed as genuine alpha-band brain activity
+(kept, not removed) had **higher** alpha-band (8-12 Hz) relative power than
+the components that were removed as broadband EMG — the removed set's median
+-3 dB bandwidth was almost 2x wider than the kept set's, which is the
+opposite pattern from what a narrowband interference source would produce.
+This is a cheap, reusable extra evidence type for the multi-evidence Gate C
+rule (`n400-six-stage-828update.md` §5.7): a real narrowband interference
+component should have a *narrow* bandwidth (a few Hz at most) sharply
+localized at the suspect frequency, not a broad hump that merely crosses
+through it — broad + high-frequency-leaning is far more consistent with
+muscle/EMG than with a fixed-frequency electrical interference source.
+
+## 15. Gate D GUI marks can live in several fields — audit before copying epoch numbers
+
+Validated on 01B on 2026-09-02. The agreed 902 workflow keeps the formal
+baseline epoch set untouched. The user may run ERPLAB Simple Voltage
+Threshold to create candidates, manually add/remove marks, click `UPDATE
+MARKS`, and save a separate `<ID>_gateD_manual_review.set`. Never click
+`REJECT`, because all 300 physical epochs must survive to the formal flagged
+dataset.
+
+Before entering `cfg.artifact_bad_epochs`, inspect at least
+`EEG.reject.rejmanual`, `rejmanualE`, `rejthresh`, all other populated
+`EEG.reject.*` fields, and the epoch/event flags. GUI actions and ERPLAB
+versions do not always populate the same field. If fields disagree, report
+the exact sets and ask the user which marks are final; do not silently take
+their union. For 01B's review copy, the final 11 marks were in `rejmanual`,
+while `rejmanualE` and threshold fields were empty. That field pattern is an
+observation about 01B, not a universal rule.
+
+Use the descriptive filename `<ID>_gateD_manual_review.set` for later
+participants instead of the ambiguous pilot filename `new.set`.
+
+## 16. Fixed figure scales and sentence-output completeness are release criteria
+
+The 902 official target-word scale is `[-20 20]` µV in every panel, with
+negative up and both HC/LC accepted N values visible. A requested ±10 µV
+comparison must be separately named and never replace the official figure;
+01B demonstrated why, because its primary −4 dB panel clipped at ±10 µV
+(HC N=5, LC N=1).
+
+The post-Stage-6 sentence analysis is isolated under `sentence_epochs/` and
+must reuse the Stage-6 ledger exactly. Do not call it complete by counting
+only image stems: the required set is 20 PNG plus 20 FIG files. Each FIG
+must have fixed x=`[-2300 800]` ms, y=`[-20 20]` µV, negative up, and two N
+labels. The 01B runtime audit passed all 20 FIG checks and observed expected
+edge coverage from 18 to 300 trials.

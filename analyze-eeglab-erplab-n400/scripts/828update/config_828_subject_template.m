@@ -31,6 +31,8 @@ cfg.reference_review_complete = false;
 cfg.analysis_rate = 250;
 cfg.analysis_highpass = 0.1;
 cfg.analysis_highpass_order = 2;
+% Locked 902 line-noise step. ERPLAB PMnotch must use Design='notch'.
+cfg.line_notch_hz = 50;
 cfg.analysis_lowpass = 30;
 cfg.analysis_lowpass_order = 8;
 

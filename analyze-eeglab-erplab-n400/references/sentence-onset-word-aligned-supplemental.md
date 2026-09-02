@@ -1,7 +1,8 @@
 # Sentence-Onset / Word-Aligned Supplemental Analysis
 
-Added 2026-08-31/09-01 while processing 01A. This is a **supplemental**
-analysis requested on top of the locked 828update six-stage pipeline — it
+Added while processing 01A and runtime-validated as part of the 902 standard
+on 01B (2026-09-02). This is the study's default post-Stage-6 **supplemental**
+analysis on top of the locked six-stage pipeline — it
 does not replace, modify, or get read by any of `phase01`–`phase06`. It lives
 entirely under `result_update/<ID>/sentence_epochs/`, separate from the
 official `continuous/`, `ica/`, `epochs/`, and `erp/` outputs.
@@ -13,7 +14,8 @@ official `continuous/`, `ica/`, `epochs/`, and `erp/` outputs.
 3. [Required event codes](#event-code-scheme-this-depends-on)
 4. [Sentence-onset epoch](#phases1_sentence_epochm)
 5. [Word-aligned ERP display](#phases2_sentence_word_aligned_erpm)
-6. [Official QC plot update](#related-fix-carried-into-the-official-pipeline)
+6. [902 release checks](#902-release-checks)
+7. [Official QC plot update](#related-fix-carried-into-the-official-pipeline)
 
 ## Run order
 
@@ -78,6 +80,10 @@ without touching the underlying data or its baseline.
 - **Outputs:** `sentence_epochs/<ID>_828update_<ref>_sentence_epochs_baseline_pre200.set/.fdt`,
   the latency CSV, and a short text log.
 
+For 01B, S1 retained all 300 trials and observed target-word latencies of
+950–2523 ms, independently confirming that the fixed S1 window covers the
+target and the required post-target interval.
+
 ## `phaseS2_sentence_word_aligned_erp.m`
 
 - **Does not recompute any baseline.** It only shifts each trial's *time
@@ -108,10 +114,10 @@ without touching the underlying data or its baseline.
 - **Trial inclusion reuses `phase06_average_erp.m`'s trial ledger verbatim**
   (`EEGClean` for the all-clean set, `PrimaryCorrectClean` for the primary
   set) — it does not re-derive artifact/behavior decisions. This keeps the
-  accepted/rejected trial set byte-identical to the official ERPs; the
-  per-bin accepted counts must match phase06's log exactly (they did for
-  01A: all-clean `28 27 28 27 23 24 28 27 23 28`, primary
-  `8 9 20 16 22 4 3 16 19 21`).
+  accepted/rejected trial set exactly identical to the official ERPs; the
+  per-bin accepted counts must match phase06's log exactly. The 01B runtime
+  validation matched all-clean `28 30 29 30 28 29 29 27 29 30` and primary
+  `5 9 15 21 25 1 5 6 18 25`.
 - **No overlay of the official target-word ERP in the final plots** — an
   earlier draft overlaid it (dashed) for validation and it was explicitly
   removed on request. If you need to sanity-check this analysis against the
@@ -142,18 +148,35 @@ without touching the underlying data or its baseline.
   widened) showing HC/LC/LC−HC with the accepted trial count annotated
   directly in the legend, e.g. `HC (N=28)`, `LC (N=24)`. ROI = mean of
   CZ/CP1/CPZ/CP2/P3/PZ/P4, same as the official `plot_828_erp_qc.m`
-  convention.
+  convention. Every panel uses the fixed scale `[-20 20]` µV with negative
+  plotted upward; participant- or panel-specific autoscaling is forbidden.
 - **Bin summary:** `<ID>_828update_<ref>_sentence_word_aligned_bin_summary.csv`
   mirrors phase06's bin summary shape (`Bin, Condition, SNR, Original,
   AllCleanAccepted, PrimaryAccepted`).
+
+## 902 release checks
+
+For each participant, confirm all of the following before calling the
+sentence deliverable complete:
+
+- S1 has 300 trials, a sentence-onset `[-200 4000]` ms window, and
+  sentence-onset `[-200 0]` ms baseline;
+- S2 does not call any baseline operation;
+- the trial inclusion CSV matches the Stage-6 ledger row by row and the bin
+  counts match exactly;
+- the display window is `[-2300 800]` ms and edge averages use `omitnan`;
+- exactly 20 PNG and 20 FIG files exist;
+- every FIG has one axes, fixed `[-20 20]` µV, negative up, and HC/LC N
+  labels. The 01B coverage validation ranged from 18 to 300 trials across
+  display samples.
 
 ## Related fix carried into the official pipeline
 
 While adding trial counts to this supplemental analysis, the official
 `plot_828_erp_qc.m` (used by `phase06_average_erp.m`) was also updated to
 annotate each of its 10 small-multiple panels with
-`(HC N=<accepted>, LC N=<accepted>)` from `ERP.ntrials.accepted`. This
-applies to *every* participant's official ERP QC figures going forward, not
-just 01A — regenerate a participant's `..._erp_all_clean_cz_roi.png` /
-`..._erp_primary_correct_clean_cz_roi.png` if they were produced before this
-fix and you want the counts visible.
+`(HC N=<accepted>, LC N=<accepted>)` from `ERP.ntrials.accepted`. This applies
+to every participant's official ERP QC figures going forward. The official
+target-word scale is also fixed at `[-20 20]` µV, negative up. Any requested
+`[-10 10]` comparison must use separate filenames and is exploratory if it
+clips; it does not change the sentence plot standard.

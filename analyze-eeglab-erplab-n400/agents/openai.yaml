@@ -1,4 +1,4 @@
 interface:
-  display_name: "N400 828update Preprocessing"
-  short_description: "Six-stage EEGLAB/ERPLAB N400 preprocessing"
-  default_prompt: "Use $analyze-eeglab-erplab-n400 to run or audit the 828update six-stage N400 preprocessing workflow."
+  display_name: "N400 902 Preprocessing"
+  short_description: "Validated six-stage N400 preprocessing workflow"
+  default_prompt: "Use $analyze-eeglab-erplab-n400 to run or audit the validated 902 N400 workflow and its sentence analysis."
