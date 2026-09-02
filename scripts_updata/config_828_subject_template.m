@@ -3,11 +3,10 @@
 cfg.subject = 'XX';
 cfg.behavior_subject = NaN;
 
-cfg.project_root = '/Users/kevinchain/Desktop/N400_project';
-cfg.repo_root = ...
-    '/Users/kevinchain/Documents/Codex/eeg-n400-analysis-skills';
+cfg.project_root = 'TODO_ABSOLUTE_N400_PROJECT_PATH';
+cfg.repo_root = fileparts(fileparts(mfilename('fullpath')));
 cfg.eeglab_root = ...
-    '/Users/kevinchain/Documents/MATLAB/eeglab2026.0.0';
+    'TODO_ABSOLUTE_EEGLAB_PATH';
 
 cfg.input_dir = fullfile(cfg.project_root,'input_set');
 cfg.behavior_dir = fullfile(cfg.project_root,'behavior');
@@ -32,6 +31,8 @@ cfg.reference_review_complete = false;
 cfg.analysis_rate = 250;
 cfg.analysis_highpass = 0.1;
 cfg.analysis_highpass_order = 2;
+% Locked 902 line-noise step. ERPLAB PMnotch must use Design='notch'.
+cfg.line_notch_hz = 50;
 cfg.analysis_lowpass = 30;
 cfg.analysis_lowpass_order = 8;
 

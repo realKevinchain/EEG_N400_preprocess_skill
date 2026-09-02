@@ -18,7 +18,10 @@ czData = squeeze(double(ERP.bindata(cz,:,:)));
 roiData = squeeze(mean(double(ERP.bindata(roi,:,:)),1));
 assert(isequal(size(czData),[ERP.pnts ERP.nbin]));
 assert(isequal(size(roiData),[ERP.pnts ERP.nbin]));
+accepted = double(ERP.ntrials.accepted(:)');
+assert(numel(accepted) == ERP.nbin);
 snrLabels = {'-4 dB','-2 dB','+4 dB','+6 dB','quiet'};
+yLimitsUV = [-20 20];
 h = figure('Visible','off','Color','w','Position',[100 100 1700 720]);
 tiledlayout(2,5,'TileSpacing','compact','Padding','compact');
 for row = 1:2
@@ -39,8 +42,11 @@ for row = 1:2
         xline(0,':','Color',[0.35 0.35 0.35]);
         yline(0,':','Color',[0.35 0.35 0.35]);
         xlim([cfg.epoch_ms(1) min(cfg.epoch_ms(2),times(end))]);
+        ylim(yLimitsUV);
+        yticks(yLimitsUV(1):10:yLimitsUV(2));
         set(gca,'YDir','reverse','Box','off');
-        title(sprintf('%s | %s',siteLabel,snrLabels{s}));
+        title(sprintf('%s | %s (HC N=%d, LC N=%d)', ...
+            siteLabel,snrLabels{s},accepted(s),accepted(s+5)));
         if row == 2, xlabel('Time (ms)'); end
         if s == 1, ylabel('Amplitude (uV; negative up)'); end
         if row == 1 && s == 1

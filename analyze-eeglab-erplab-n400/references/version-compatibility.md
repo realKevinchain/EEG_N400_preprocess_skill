@@ -24,6 +24,7 @@ Last checked: 2026-07-17. Recheck official pages before claiming these are curre
 | Channel interpolation | Book demonstrates ERPLAB selective interpolation | ERPLAB 12.20 notes fixes for newer EEGLAB; verify output and channel metadata |
 | Measurement/baseline | Book demonstrates then-current Measurement Tool | ERPLAB 12.10 notes a critical fix for custom/poststimulus baselines; validate installed version and preview scores |
 | Filter calls | Book history uses `pop_basicfilter` with named options | Run local `help pop_basicfilter`; do not assume old order/slope semantics without verification |
+| ERPLAB PMnotch | A single cutoff alone can appear to run | In the locally tested 01B environment, `Filter='PMnotch'` also required `Design='notch'`; without it the call returned unchanged data after a non-fatal warning. 902 locks and statically checks both options. |
 | Artifact calls | Core functions remain in official repository | Use GUI history/local help because defaults and GUI persistence can change |
 
 ## Runtime provenance to capture
@@ -36,4 +37,3 @@ Save at minimum:
 - ERPLAB release folder/tag and Classic vs Studio;
 - all plugin versions involved in import, line-noise removal, or ICA classification;
 - local help text or GUI history when a stored template call is changed.
-

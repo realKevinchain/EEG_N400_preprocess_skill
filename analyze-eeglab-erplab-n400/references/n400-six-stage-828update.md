@@ -4,7 +4,7 @@
 > `scripts/828update/`。从技能目录直接运行时，将本文命令中的
 > `scripts_updata/` 替换为该技能根目录下的 `scripts/828update/`。
 
-版本：2026-08-28
+版本：902 / 2026-09-02（由完整01B pilot验证后锁定）
 
 适用范围：采用 ICA 的 N400 正式预处理流程
 
@@ -18,7 +18,7 @@
   ↓
 阶段2  M1/M2审核与最终重参考
   ↓
-阶段3  0.1–30 Hz、250 Hz正式滤波
+阶段3  250 Hz；0.1 Hz高通 → 50 Hz PMnotch → 30 Hz低通
   ↓
 阶段4  ICA训练、复核与去成分
   ↓
@@ -27,13 +27,17 @@
 阶段6  行为正确性、ERP平均与重载QC
 ```
 
-相对原指南，本版只做以下必要调整：
+相对原指南，本版锁定以下必要调整：
 
 1. 最终重参考提前到正式滤波和 ICA 之前；
 2. 正式滤波成为阶段3，ICA成为阶段4；
 3. 坏道插值、EventList、BINLISTER和分段合并到阶段5；
 4. 重参考会降低数据秩，因此 ICA 增加数值秩检查和显式 PCA 维度；
-5. 取消所有 no-baseline 数据和分支，正式 epoch 必须使用 −200 至 0 ms 基线。
+5. 取消所有 no-baseline 数据和分支，正式 epoch 必须使用 −200 至 0 ms 基线；
+6. 阶段3显式加入50 Hz ERPLAB PMnotch，且必须指定 `Design='notch'`；
+7. Gate D固定为阈值候选筛查、条件盲人工增删标记、`UPDATE MARKS`、单独保存复核副本，不物理删除epoch；
+8. 正式ERP图统一为±20 µV、负向朝上，并在每个HC/LC图中显示两组N；
+9. 阶段6之后执行独立的sentence-onset/word-aligned补充分析，但不得改写六阶段结果。
 
 旧 `scripts/systematic/`、`scripts/no-ica/`、`derivatives/` 和 `no-ica/` 结果不属于本流程，不得作为本流程的阶段输入。
 
@@ -76,11 +80,13 @@ N400_project/behavior/<ID>.csv
 run(fullfile(fileparts(mfilename('fullpath')),'refresh_828_config.m'));
 ```
 
-使用现有 01B pilot 时直接运行：
+仅在审计已完成的01B pilot时运行：
 
 ```matlab
 run('scripts_updata/config_828_01B.m')
 ```
+
+新被试必须从 `config_828_subject_template.m` 建立配置并重新完成Gate A–D；不得复制01B的T7/T8、IC或坏epoch编号。
 
 ### 0.2 每次运行阶段脚本前重新加载配置
 
@@ -101,7 +107,7 @@ run('scripts_updata/phase01_import_audit.m')
 - SET和FDT均进行防覆盖检查；
 - 发现既有最终输出时，脚本报告已经完成并停止；
 - 发现不完整的部分输出时，脚本停止，不能自动覆盖或删除；
-- 人工复核工具只读显示，不得在复核窗口标记、删除或保存数据；
+- 配套复核工具保持只读；Gate D也允许用户在ERPLAB界面对单独复核副本更新标记，但不得点击 `REJECT` 或物理删除epoch；
 - 阶段5只标记坏epoch，不物理删除trial。
 
 如果某阶段因MATLAB退出或磁盘问题只留下部分输出，应先记录错误、核对已生成文件，再把不完整结果整体移到带日期的归档目录。不得直接覆盖旧文件。
@@ -119,7 +125,8 @@ N400_project/result_update/<ID>/
 ├── tables/         trial ledger、bin汇总和人工决定表
 ├── erp/            primary/all-clean ERP、PNG和FIG
 ├── qc/             通道、参考、滤波、ICA和epoch审核表
-└── logs/           各阶段不可覆盖的PASS日志
+├── logs/           各阶段不可覆盖的PASS日志
+└── sentence_epochs/ 阶段6后独立的sentence补充分析，不是六阶段输入
 ```
 
 所有正式派生文件统一包含：
@@ -155,7 +162,7 @@ N400_project/result_update/<ID>/
 |---|---|---|---|
 | 1 导入与审计 | `phase01_import_audit.m` | 原始导入、通道位置和连续波形检查 | 通道QC、异常时间窗QC、PASS日志 |
 | 2 最终重参考 | `phase02_reference.m` | Gate A：M1/M2、坏道和参考模式 | 未滤波、已重参考连续SET |
-| 3 正式滤波 | `phase03_filter.m` | 比较滤波前后波形与频谱 | 0.1–30 Hz、250 Hz pre-ICA SET |
+| 3 正式滤波 | `phase03_filter.m` | 比较滤波前后波形与频谱 | 0.1 HP、50 PMnotch、30 LP、250 Hz pre-ICA SET |
 | 4 ICA | `phase04_ica.m` | Gate B训练片段；Gate C人工IC复核 | 训练、ICA解、权重和ICA-clean SET |
 | 5 分段与伪迹 | `phase05_epoch_artifact.m` | Gate D：条件盲epoch复核 | binned连续数据、基线epoch和bit-1数据 |
 | 6 行为与ERP | `phase06_average_erp.m` | ERP波形、试次数和数据质量检查 | ledger、bin表、两套ERP和ROI图 |
@@ -354,7 +361,7 @@ logs/<ID>_828update_<ref>_phase02_pass.txt
 
 ---
 
-## 4. 阶段3：0.1–30 Hz、250 Hz正式滤波
+## 4. 阶段3：250 Hz、0.1 Hz高通、50 Hz PMnotch、30 Hz低通
 
 ### 4.1 输入
 
@@ -369,6 +376,8 @@ continuous/<ID>_828update_<ref>_continuous_unfiltered.set/.fdt
 | 正式采样率 | 250 Hz |
 | 高通 | 0.1 Hz |
 | 高通有效阶数 | 2 |
+| 线噪notch | 50 Hz ERPLAB PMnotch |
+| notch设计 | 必须为 `Design='notch'` |
 | 低通 | 30 Hz |
 | 低通有效阶数 | 8 |
 | 设计 | 双向非因果Butterworth |
@@ -380,8 +389,11 @@ continuous/<ID>_828update_<ref>_continuous_unfiltered.set/.fdt
 ```text
 重采样至250 Hz
 → EEG/EOG 0.1 Hz高通
+→ EEG/EOG 50 Hz PMnotch（Design='notch'）
 → EEG/EOG 30 Hz低通
 ```
+
+50 Hz notch在最终0.1–30 Hz数据中科学上是冗余的，但902按用户要求显式保留。01B定点诊断在50.00 Hz测得56.7 dB衰减。若遗漏 `Design='notch'`，ERPLAB PMnotch可能只给出非致命警告并原样传递数据，因此脚本和静态检查均锁定该参数。
 
 此阶段不再次参考、不插值、不分段。
 
@@ -713,12 +725,21 @@ run('scripts_updata/config_828_<ID>.m')
 run('scripts_updata/review_phase05_artifact_gate.m')
 ```
 
-审核工具：
+正式的基线epoch文件保持不变。配套审核工具：
 
 - 合并显示全部300个epoch；
 - 隐藏条件事件标签；
 - 只显示头皮通道，排除M1、M2和辅助通道；
 - 不修改或保存数据。
+
+如使用ERPLAB GUI，固定流程为：
+
+1. `Simple Voltage Threshold`只生成候选，不是最终拒绝决定；
+2. 合并条件后逐个检查全部epoch，人工增加或取消标记；
+3. 点击 `UPDATE MARKS`，不得点击 `REJECT`；
+4. 另存为 `<ID>_gateD_manual_review.set`，不得覆盖正式epoch；
+5. 审计 `EEG.reject.rejmanual`、`rejmanualE`、`rejthresh`、其他reject字段和event flag；
+6. 字段不一致时与用户核对，不能自动求并集；最终只把确认后的统一epoch编号写入配置。
 
 人工检查：
 
@@ -885,9 +906,13 @@ bin汇总包含：
 - LC−HC：黑色；
 - 差异方向永久锁定为LC−HC；
 - 负向朝上；
+- 每个panel固定使用 `[-20 20]` µV，不得按panel自动缩放；
+- 每个HC/LC panel都显示 `HC N=...` 与 `LC N=...`；
 - 五列依次为−4、−2、+4、+6和quiet。
 
 在LC−HC规则下，负值表示LC比HC更负。
+
+只有用户明确要求时才可另做 `[-10 10]` µV对比图；必须使用独立后缀，不能覆盖±20 µV正式图。若任何波形超界，则明确标为探索性展示而非正式图。01B的primary −4 dB图在±10 µV下发生裁剪，因此正式标准保持±20 µV。
 
 ### 7.8 人工ERP QC
 
@@ -914,6 +939,27 @@ erp/<ID>_828update_<ref>_erp_primary_correct_clean_cz_roi.png/.fig
 erp/<ID>_828update_<ref>_erp_all_clean_cz_roi.png/.fig
 logs/<ID>_828update_<ref>_phase06_pass.txt
 ```
+
+### 7.10 阶段6后的sentence补充分析
+
+依次运行：
+
+```matlab
+run('scripts_updata/phaseS1_sentence_epoch.m')
+run('scripts_updata/phaseS2_sentence_word_aligned_erp.m')
+```
+
+该分支是902在本研究中的默认后续交付，但始终独立于六阶段正式结果：
+
+- S1以sentence onset建立 `[-200 4000]` ms epoch，并相对sentence onset做 `[-200 0]` ms基线；
+- S2只平移显示时间轴至target word，不重新基线；
+- 固定显示 `[-2300 800]` ms，边缘用 `omitnan` 处理不同target latency造成的覆盖差异；
+- 精确复用阶段6 trial ledger的artifact/behavior决定；
+- 输出2种模式 × 2个site × 5个SNR，即20 PNG和20 FIG；
+- 所有图固定±20 µV、负向朝上，并显示HC与LC的N；
+- 全部文件写入 `sentence_epochs/`，不得修改phase01–06输出。
+
+完整说明见 `sentence-onset-word-aligned-supplemental.md`。
 
 ---
 
@@ -1021,32 +1067,24 @@ python3 scripts_updata/validate_828_static.py
 - 不使用旧输出目录；
 - 阶段依赖顺序正确；
 - 阶段2先参考、阶段3再滤波；
+- 阶段3含显式50 Hz `PMnotch` 与 `Design='notch'`，且TRIGGER不滤波；
 - ICA包含数值秩和PCA控制；
 - 阶段5只调用一次 `pop_epochbin`；
 - 强制使用 `baseline_ms = [-200 0]`；
 - bit 1/bit 2及两套ERP接口存在；
+- 正式ERP和sentence图固定±20 µV、负向朝上并显示N；
+- sentence分支固定窗口、复用ledger并完整保护20 PNG + 20 FIG；
 - 各阶段具有防覆盖逻辑。
 
 静态验证通过不等于真实被试运行通过。真实PASS必须来自用户MATLAB会话中的阶段日志和人工门记录。
 
 ---
 
-## 11. 01B pilot当前状态
+## 11. 01B pilot验证状态
 
-截至2026-08-28，01B已在用户MATLAB会话中完成：
+截至2026-09-02，01B已完成阶段1–6、Gate A–D、ERP保存重载QC和sentence补充分析。阶段1–6均有真实运行PASS日志；sentence trial log与正式ledger逐试次一致；20 PNG + 20 FIG均通过固定窗口、固定±20 µV、负向朝上及双N标签检查。
 
-- 阶段1：PASS；
-- 通道：67；
-- EEG事件：603；
-- 目标事件：300；
-- 行为行：300；
-- 行为—EEG逐试次一致：300/300；
-- 阶段2 Gate A材料已生成；
-- 参考审核窗口已成功打开；
-- 审核候选为M1、M2、T7和T8；
-- T7/T8对应锁定通道26/34。
-
-01B尚未完成Gate A，因此阶段2及其后阶段不得标记为PASS。
+01B个体决定包括坏道T7/T8 `[26 34]`、删除IC `[1 4 8 20 31 41 52 56 61]`、坏epoch `[49 52 66 70 98 118 194 203 246 253 292]`。这些编号只用于审计，绝不是下一位被试的默认值。完整运行事实见 `01B-validated-pilot-902.md`。
 
 ---
 
@@ -1063,12 +1101,15 @@ python3 scripts_updata/validate_828_static.py
 - raw/binned EventList和10×30 bin核对；
 - 唯一一套−200至0 ms基线校正epoch；
 - Gate D条件盲坏epoch清单；
+- Gate D单独复核副本、reject字段审计和用户确认记录；
 - bit-1 artifact-flagged SET和阶段5 PASS日志；
 - trial ledger和bin summary；
 - primary和all-clean ERP；
 - ERP保存后重载QC；
 - primary和all-clean CZ/中央顶区ROI PNG与FIG；
+- 两套正式ERP图固定±20 µV、负向朝上并显示HC/LC N；
 - 阶段6 PASS日志；
 - 最终人工ERP QC记录。
+- sentence S1/S2日志、trial inclusion记录、bin summary、20 PNG和20 FIG。
 
 只有上述材料齐全，且所有人工门和自动验证均通过，才视为该被试完成828update六阶段预处理。

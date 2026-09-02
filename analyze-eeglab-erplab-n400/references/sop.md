@@ -1,4 +1,4 @@
-# 828update Six-Stage SOP
+# 902 / 828update Six-Stage SOP
 
 Use this as the short execution contract. Read `n400-six-stage-828update.md` for complete commands, filenames, GUI instructions, and failure handling.
 
@@ -27,7 +27,7 @@ Use this as the short execution contract. Read `n400-six-stage-828update.md` for
 
 1. Load the rereferenced continuous dataset.
 2. Resample to 250 Hz.
-3. Apply bidirectional Butterworth 0.1-Hz high-pass and 30-Hz low-pass to EEG/EOG only.
+3. Apply to EEG/EOG only, in order: bidirectional Butterworth 0.1-Hz high-pass, 50-Hz ERPLAB `PMnotch` with `Design='notch'`, then bidirectional Butterworth 30-Hz low-pass.
 4. Preserve the resampled TRIGGER without filtering.
 5. Compare before/after waveforms, spectra, edges, M1/M2, EOG, and key centroparietal channels.
 
@@ -54,8 +54,10 @@ Use this as the short execution contract. Read `n400-six-stage-828update.md` for
 4. Require 30 targets per bin and exclude codes 98/99 from target bins.
 5. Extract one nominal −200 to 800 ms epoch dataset and apply −200 to 0 ms baseline.
 6. Do not create an unbaselined formal epoch dataset.
-7. At Gate D, review all 300 pooled epochs without condition labels.
-8. Synchronize reviewed EEG artifact bit 1 across reject, epoch, event, and EVENTLIST structures without deleting trials.
+7. At Gate D, review all 300 pooled epochs without condition labels. Simple Voltage Threshold is only a candidate screen.
+8. Manually add/remove marks, click `UPDATE MARKS`, never `REJECT`, and save a separate `<ID>_gateD_manual_review.set` without overwriting the formal epoch file.
+9. Audit `rejmanual`, `rejmanualE`, `rejthresh`, related reject fields, and event flags. Reconcile ambiguity with the user and enter one unified `artifact_bad_epochs` list.
+10. Synchronize reviewed EEG artifact bit 1 across reject, epoch, event, and EVENTLIST structures without deleting trials.
 
 **Release:** 10×30 bins, 300 physical epochs, baseline mean near zero, synchronized bit 1, and reload equality.
 
@@ -67,6 +69,17 @@ Use this as the short execution contract. Read `n400-six-stage-828update.md` for
 4. Average all-clean ERP from every EEG-clean trial.
 5. Write trial ledger and per-bin original/artifact/behavior/accepted counts.
 6. Save and reload both ERPs; require exact bindata, SEM/binerror, dataquality, time, and count equality.
-7. Generate CZ and CZ/CP1/CPZ/CP2/P3/PZ/P4 plots with LC−HC and negative up.
+7. Generate CZ and CZ/CP1/CPZ/CP2/P3/PZ/P4 plots with LC−HC, fixed `[-20 20]` µV, negative up, and HC/LC N in every panel.
 
 **Release:** both ERPs reload exactly, counts match the ledger, plots exist, and the runtime PASS log exists.
+
+## Post-Stage-6 sentence deliverable
+
+1. Run S1 from the post-ICA interpolated continuous data: sentence onset `[-200 4000]` ms, sentence-onset baseline `[-200 0]` ms.
+2. Run S2 without re-baselining: shift only the display axis to target onset and use fixed `[-2300 800]` ms.
+3. Reuse the Stage-6 trial ledger exactly and average variable edges with `omitnan`.
+4. Save 20 PNG and 20 FIG files under `sentence_epochs/`: 2 modes × 2 sites × 5 SNR, fixed ±20 µV, negative up, with HC/LC N.
+
+**Release:** ledger rows and bin counts match Stage 6, the complete 40-file plot set passes figure-property checks, and no six-stage output was modified.
+
+The 01B configuration is a pilot audit record only. Re-run Gates A–D for each participant; never copy 01B channel, IC, or epoch numbers.

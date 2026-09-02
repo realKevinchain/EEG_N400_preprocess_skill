@@ -1,4 +1,4 @@
-# 828update Data Quality Checklist
+# 902 / 828update Data Quality Checklist
 
 Store every result in the participant `result_update/<ID>/` QC, table, or log directories. A checked item requires evidence, not only a verbal assertion.
 
@@ -27,7 +27,7 @@ Store every result in the participant `result_update/<ID>/` QC, table, or log di
 ## Stage 3: filtering
 
 - [ ] Output rate is 250 Hz.
-- [ ] EEG/EOG use 0.1–30 Hz bidirectional Butterworth filtering.
+- [ ] EEG/EOG use the locked order: 0.1-Hz Butterworth HP, 50-Hz ERPLAB PMnotch with `Design='notch'`, then 30-Hz Butterworth LP.
 - [ ] TRIGGER was resampled but not filtered.
 - [ ] Filtering produced no NaN or Inf.
 - [ ] Reference residual and 300 target events remain valid.
@@ -61,6 +61,10 @@ Store every result in the participant `result_update/<ID>/` QC, table, or log di
 - [ ] Every epoch uses mandatory −200 to 0 ms baseline.
 - [ ] No unbaselined formal epoch branch exists.
 - [ ] All 300 epochs were reviewed condition-blind.
+- [ ] Simple Voltage Threshold, if used, served only as a candidate screen.
+- [ ] The user manually reconciled marks, clicked `UPDATE MARKS`, and never used `REJECT` to delete epochs.
+- [ ] A separate `<ID>_gateD_manual_review.set` copy exists; the formal baseline epoch file was not overwritten.
+- [ ] `rejmanual`, `rejmanualE`, `rejthresh`, other reject fields, and event flags were audited; any disagreement was resolved with the user before entering the unified list.
 - [ ] Unified EEG artifact bit 1 agrees across reject, epoch, event, and EVENTLIST.
 - [ ] No trial was physically deleted.
 - [ ] Artifact decisions table and phase05 PASS log exist.
@@ -75,13 +79,25 @@ Store every result in the participant `result_update/<ID>/` QC, table, or log di
 - [ ] Ledger and bin summary reconcile every trial and count.
 - [ ] Both ERPs include SEM/dataquality information.
 - [ ] Saved and reloaded bindata, binerror, dataquality, time, and counts are identical.
-- [ ] CZ and centroparietal ROI plots use LC−HC and negative up.
+- [ ] CZ and centroparietal ROI plots use LC−HC, fixed `[-20 20]` µV, and negative up.
+- [ ] Every HC/LC panel displays both accepted trial counts.
+- [ ] Any requested `[-10 10]` comparison used separate filenames, did not overwrite official plots, and was labelled exploratory if clipped.
 - [ ] Prestimulus baseline, 300–500 ms morphology, late drift, trial balance, and anomalous conditions were reviewed.
 - [ ] Phase06 PASS log exists.
 
+## Post-Stage-6 sentence deliverable
+
+- [ ] S1 uses sentence-onset `[-200 4000]` ms epochs and `[-200 0]` ms sentence-onset baseline.
+- [ ] S2 performs no re-baselining and uses fixed `[-2300 800]` ms display.
+- [ ] Edge averaging uses `omitnan` and variable coverage is documented.
+- [ ] Artifact and behavior inclusion matches the official Stage-6 ledger row by row and by bin.
+- [ ] Exactly 20 PNG and 20 FIG files exist under `sentence_epochs/word_aligned_plots/`.
+- [ ] Every sentence FIG uses fixed `[-20 20]` µV, negative up, and HC/LC N labels.
+- [ ] The sentence branch did not modify or overwrite any Phase 01–06 output.
+
 ## Cohort release
 
-- [ ] One representative participant completed every GUI gate and runtime check.
+- [ ] The 01B pilot record is retained as validation evidence but its channel, IC, and epoch numbers are not copied to later participants.
 - [ ] Rerunning unchanged inputs/config does not overwrite outputs.
 - [ ] Every participant has the minimum deliverables listed in the full guide.
 - [ ] No unresolved TODO paths, reference choices, IC decisions, or artifact decisions remain.

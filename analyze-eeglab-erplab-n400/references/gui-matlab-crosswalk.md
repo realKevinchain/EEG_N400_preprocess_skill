@@ -9,6 +9,7 @@ Run each operation once in the installed Classic GUI, inspect `EEG.history` or `
 | Channel locations | Edit > Channel locations | `EEG.chanlocs = pop_chanedit(EEG.chanlocs, 'load', {...});` | Confirmed by [EEGLAB history tutorial](https://eeglab.org/tutorials/11_Scripting/Using_EEGLAB_history.html) |
 | Resample | Tools > Change sampling rate | `EEG = pop_resample(EEG, new_rate);` | Confirmed by [EEGLAB resampling tutorial](https://eeglab.org/tutorials/05_Preprocess/resampling.html); anti-alias filter is applied |
 | ERPLAB EEG filter | ERPLAB > Filter & Frequency Tools > Filters for EEG data | `EEG = pop_basicfilter(EEG, channels, ...);` | Book history example p. 311; verify local ERPLAB 13 help/options |
+| 902 line notch | ERPLAB > Filter & Frequency Tools > Filters for EEG data | `EEG = pop_basicfilter(EEG, channels, 'Filter','PMnotch','Design','notch','Cutoff',50, ...);` | Runtime-validated on 01B. `Design='notch'` is mandatory; omitting it can silently no-op. Apply after 0.1-Hz HP and before 30-Hz LP; never include TRIGGER. |
 | EEGLAB FIR filter | Tools > Filter the data | `EEG = pop_eegfiltnew(EEG, ...);` | `[GENERAL]`; current EEGLAB alternative, not the book's ERPLAB Butterworth example |
 | Re-reference | Tools > Re-reference | `EEG = pop_reref(EEG, ref_channels);` | Current EEGLAB function; choice of reference: book pp. 130–153 |
 | ERPLAB channel equations | ERPLAB > EEG Channel Operations | `EEG = pop_eegchanoperator(EEG, equation_file, ...);` | Book pp. 321–327; preserves repeatable equations |
@@ -18,7 +19,7 @@ Run each operation once in the installed Classic GUI, inspect `EEG.history` or `
 | Create EventList | ERPLAB > EventList > Create EEG EventList | `EEG = pop_creabasiceventlist(EEG, ...);` | Book pp. 45–47; [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_creabasiceventlist.m) |
 | Assign bins | ERPLAB > Assign bins (BINLISTER) | `EEG = pop_binlister(EEG, 'BDF', bdf, ...);` | Book pp. 48–51; [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_binlister.m) |
 | Bin-based epoch/baseline | ERPLAB > Extract bin-based epochs | `EEG = pop_epochbin(EEG, epoch_ms, baseline);` | Book pp. 52–54, 368; [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_epochbin.m) |
-| Absolute voltage artifact | ERPLAB > Artifact Detection > Simple voltage threshold | `EEG = pop_artextval(EEG, 'Channel', ..., 'Flag', ..., 'Threshold', ..., 'Twindow', ...);` | Book history p. 69; [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_artextval.m) |
+| Gate D candidate threshold | ERPLAB > Artifact Detection > Simple voltage threshold | `EEG = pop_artextval(EEG, 'Channel', ..., 'Flag', ..., 'Threshold', ..., 'Twindow', ...);` | Candidate screen only. Review condition-blind, manually add/remove, click `UPDATE MARKS`, never `REJECT`, and save `<ID>_gateD_manual_review.set`. Audit all reject fields before entering the unified list. |
 | Moving-window peak-to-peak | ERPLAB > Artifact Detection > Moving window peak-to-peak | `EEG = pop_artmwppth(EEG, 'Channel', ..., 'Flag', ..., 'Threshold', ..., 'Twindow', ..., 'Windowsize', ..., 'Windowstep', ...);` | [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_artmwppth.m); scientific settings remain `[DECIDE]` |
 | Step-like blink/eye detector | ERPLAB > Artifact Detection > Step-like artifacts | `pop_artstep` with call copied from local history | `[UNVERIFIED]` argument list in this Skill; use GUI history because versions differ |
 | Average ERPs | ERPLAB > Compute averaged ERPs | `ERP = pop_averager(EEG, 'Criterion','good','ExcludeBoundary','on','SEM','on');` | Book pp. 58–66; [ERPLAB source](https://github.com/ucdavis/erplab/blob/master/pop_functions/pop_averager.m) |
@@ -33,4 +34,3 @@ Run each operation once in the installed Classic GUI, inspect `EEG.history` or `
 3. Compare the scripted output with the manually processed output before cohort execution.
 4. Record changed function names/arguments in `version-compatibility.md` or the study methods log.
 5. Mark any remembered but unconfirmed call `[UNVERIFIED]` until local help or official source confirms it.
-

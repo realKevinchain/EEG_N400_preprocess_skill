@@ -29,7 +29,7 @@
 - Import format/options:
 - Channel locations and missing channels:
 - Resampling and anti-aliasing:
-- Analysis filter: type, cutoffs, order/slope, direction, channels, DC handling:
+- Analysis filter: 0.1-Hz HP, 50-Hz ERPLAB PMnotch (`Design='notch'`), 30-Hz LP; order/slope, direction, channels, DC handling; TRIGGER protection:
 - Initial and final reference:
 - EOG derivations:
 - Bad-channel criteria, participant-specific channels, and interpolation method/timing:
@@ -54,6 +54,7 @@ For each choice, state `[BOOK]`, `[DERIVED]`, `[GENERAL]`, or `[DECIDE]`, plus s
 - Baseline interval and rationale:
 - Artifact algorithms, channels, windows, thresholds, steps, and flags:
 - Parameter-tuning rule and inspection procedure:
+- Gate D review-copy filename, `UPDATE MARKS` confirmation, reject-field audit, and reconciled epoch list:
 - Participant/trial exclusion rules and when fixed:
 - Accepted/rejected/invalid trials by participant/condition:
 - Averaging options and boundary handling:
@@ -83,6 +84,9 @@ For each choice, state `[BOOK]`, `[DERIVED]`, `[GENERAL]`, or `[DECIDE]`, plus s
 - Trial retention summary:
 - SME/aSME summary for the primary measure:
 - Waveform/difference-wave/scalp-distribution checks:
+- Official target-word figure scale (±20 µV), negative-up convention, and HC/LC N labels:
+- Optional separately named ±10 µV comparison and any clipping:
+- Sentence supplement: S1/S2 parameters, exact ledger match, edge coverage, and 20 PNG + 20 FIG verification:
 - ICA and ocular-correction checks:
 - Reproducibility rerun result:
 
@@ -97,4 +101,3 @@ For each choice, state `[BOOK]`, `[DERIVED]`, `[GENERAL]`, or `[DECIDE]`, plus s
 - Luck book PDF physical pages:
 - Official software documentation/release pages:
 - External methodological sources:
-
