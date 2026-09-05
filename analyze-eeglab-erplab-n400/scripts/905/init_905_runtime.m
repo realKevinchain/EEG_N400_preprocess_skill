@@ -1,8 +1,8 @@
-%% Initialize the independent 828update runtime and output directories.
+%% Initialize the independent 905 runtime and output directories.
 
 assert(exist('cfg','var') == 1, ...
-    'Load an 828update participant config first.');
-run(fullfile(fileparts(mfilename('fullpath')),'validate_828_config.m'));
+    'Load an 905 participant config first.');
+run(fullfile(fileparts(mfilename('fullpath')),'validate_905_config.m'));
 assert(exist(cfg.eeglab_root,'dir') == 7,'EEGLAB directory not found.');
 if exist('eeglab','file') ~= 2
     addpath(cfg.eeglab_root);

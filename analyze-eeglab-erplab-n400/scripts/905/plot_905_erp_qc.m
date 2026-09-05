@@ -1,5 +1,5 @@
-function plot_828_erp_qc(cfg,ERP_PRIMARY,ERP_ALLCLEAN)
-% Generate fixed CZ and centroparietal 828update morphology figures.
+function plot_905_erp_qc(cfg,ERP_PRIMARY,ERP_ALLCLEAN)
+% Generate fixed-scale CZ and centroparietal 905 morphology figures.
 labels = upper(string({ERP_ALLCLEAN.chanlocs.labels}));
 cz = find(labels == "CZ",1);
 roiNames = ["CZ","CP1","CPZ","CP2","P3","PZ","P4"];
@@ -8,11 +8,13 @@ for k = 1:numel(roiNames)
     roi(k) = find(labels == roiNames(k),1);
 end
 assert(isscalar(cz) && all(isfinite(roi)));
-localPlotOne(cfg,ERP_PRIMARY,cz,roi,'primary_correct_clean');
-localPlotOne(cfg,ERP_ALLCLEAN,cz,roi,'all_clean');
+for halfScaleUV = [20 10]
+    localPlotOne(cfg,ERP_PRIMARY,cz,roi,'primary_correct_clean',halfScaleUV);
+    localPlotOne(cfg,ERP_ALLCLEAN,cz,roi,'all_clean',halfScaleUV);
+end
 end
 
-function localPlotOne(cfg,ERP,cz,roi,mode)
+function localPlotOne(cfg,ERP,cz,roi,mode,halfScaleUV)
 times = double(ERP.times(:));
 czData = squeeze(double(ERP.bindata(cz,:,:)));
 roiData = squeeze(mean(double(ERP.bindata(roi,:,:)),1));
@@ -21,7 +23,7 @@ assert(isequal(size(roiData),[ERP.pnts ERP.nbin]));
 accepted = double(ERP.ntrials.accepted(:)');
 assert(numel(accepted) == ERP.nbin);
 snrLabels = {'-4 dB','-2 dB','+4 dB','+6 dB','quiet'};
-yLimitsUV = [-20 20];
+yLimitsUV = [-halfScaleUV halfScaleUV];
 h = figure('Visible','off','Color','w','Position',[100 100 1700 720]);
 tiledlayout(2,5,'TileSpacing','compact','Padding','compact');
 for row = 1:2
@@ -43,7 +45,7 @@ for row = 1:2
         yline(0,':','Color',[0.35 0.35 0.35]);
         xlim([cfg.epoch_ms(1) min(cfg.epoch_ms(2),times(end))]);
         ylim(yLimitsUV);
-        yticks(yLimitsUV(1):10:yLimitsUV(2));
+        yticks(linspace(yLimitsUV(1),yLimitsUV(2),5));
         set(gca,'YDir','reverse','Box','off');
         title(sprintf('%s | %s (HC N=%d, LC N=%d)', ...
             siteLabel,snrLabels{s},accepted(s),accepted(s+5)));
@@ -54,10 +56,11 @@ for row = 1:2
         end
     end
 end
-sgtitle(sprintf('%s 828update ERP: %s',cfg.subject,strrep(mode,'_',' ')));
+sgtitle(sprintf('%s 905 ERP: %s | fixed +/-%d uV', ...
+    cfg.subject,strrep(mode,'_',' '),halfScaleUV));
 pngPath = fullfile(cfg.erp_dir,sprintf( ...
-    '%s_828update_%s_erp_%s_cz_roi.png', ...
-    cfg.subject,cfg.reference_tag,mode));
+    '%s_905_%s_erp_%s_cz_roi_scale%duv.png', ...
+    cfg.subject,cfg.reference_tag,mode,halfScaleUV));
 figPath = replace(pngPath,'.png','.fig');
 assert(exist(pngPath,'file') == 0 && exist(figPath,'file') == 0, ...
     'ERP plot exists; stopped without overwriting.');

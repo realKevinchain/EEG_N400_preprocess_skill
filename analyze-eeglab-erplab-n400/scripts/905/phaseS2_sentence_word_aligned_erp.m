@@ -1,4 +1,4 @@
-%% Supplemental (NOT part of the locked 828update six-stage output):
+%% Supplemental (NOT part of the locked 905 six-stage output):
 % Word-onset-aligned DISPLAY built from the sentence-onset-locked epoch
 % (phaseS1_sentence_epoch.m). The underlying data and baseline are left
 % exactly as phaseS1 produced them (baseline-corrected to -200:0 ms relative
@@ -20,25 +20,25 @@
 % accepted/rejected trial set is identical to the official ERPs. Every
 % trial's inclusion/exclusion is written to a CSV for the record.
 
-run(fullfile(fileparts(mfilename('fullpath')),'init_828_runtime.m'));
+run(fullfile(fileparts(mfilename('fullpath')),'init_905_runtime.m'));
 
 % Fixed across all participants -- do not recompute per subject.
 WORD_ALIGNED_DISPLAY_MS = [-2300 800];
 PLOT_Y_LIMITS_UV = [-20 20];
 
 sentDir = fullfile(cfg.result_root,'sentence_epochs');
-epochSetName = sprintf('%s_828update_%s_sentence_epochs_baseline_pre200.set', ...
+epochSetName = sprintf('%s_905_%s_sentence_epochs_baseline_pre200.set', ...
     cfg.subject,cfg.reference_tag);
 latencyCsvPath = fullfile(sentDir,sprintf( ...
-    '%s_828update_%s_sentence_target_latency.csv',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_target_latency.csv',cfg.subject,cfg.reference_tag));
 ledgerPath = fullfile(cfg.tables_dir,cfg.ledger_csv);
 
 rejectionCsvPath = fullfile(sentDir,sprintf( ...
-    '%s_828update_%s_sentence_word_aligned_trial_log.csv',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_word_aligned_trial_log.csv',cfg.subject,cfg.reference_tag));
 binSummaryPath = fullfile(sentDir,sprintf( ...
-    '%s_828update_%s_sentence_word_aligned_bin_summary.csv',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_word_aligned_bin_summary.csv',cfg.subject,cfg.reference_tag));
 logPath = fullfile(sentDir,sprintf( ...
-    '%s_828update_%s_sentence_word_aligned_log.txt',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_word_aligned_log.txt',cfg.subject,cfg.reference_tag));
 plotsRoot = fullfile(sentDir,'word_aligned_plots');
 snrOrder = ["-4","-2","4","6","quiet"];
 snrFileTag = ["-4dB","-2dB","4dB","6dB","quiet"];
@@ -78,11 +78,17 @@ SENT = pop_loadset('filename',epochSetName,'filepath',sentDir);
 latencyOpts = detectImportOptions(latencyCsvPath);
 latencyOpts = setvartype(latencyOpts,{'Condition','SNR'},'string');
 LATENCY = readtable(latencyCsvPath,latencyOpts);
-LEDGER = readtable(ledgerPath);
+ledgerOpts = detectImportOptions(ledgerPath);
+ledgerOpts = setvartype(ledgerOpts,{'Condition','SNR'},'string');
+LEDGER = readtable(ledgerPath,ledgerOpts);
 assert(height(LATENCY) == cfg.expected_trials);
 assert(height(LEDGER) == cfg.expected_trials);
 assert(isequal(LATENCY.Trial,LEDGER.EEGEpoch), ...
     'Sentence-epoch trial numbering does not match the official trial ledger.');
+assert(isequal(LATENCY.Condition,LEDGER.Condition), ...
+    'Sentence condition order does not match the official trial ledger.');
+assert(isequal(LATENCY.SNR,LEDGER.SNR), ...
+    'Sentence SNR order does not match the official trial ledger.');
 
 srate = SENT.srate;
 [~,zeroSampleIdx] = min(abs(SENT.times));
@@ -216,7 +222,7 @@ for s = 1:5
     ylim(yLimitsUV);
     yticks(yLimitsUV(1):10:yLimitsUV(2));
     set(gca,'YDir','reverse','Box','off','FontSize',13);
-    title(sprintf('%s 828update word-aligned ERP (%s) | %s | %s', ...
+    title(sprintf('%s 905 word-aligned ERP (%s) | %s | %s', ...
         cfg.subject,modeLabel,siteLabel,snrLabels{s}),'FontSize',13);
     xlabel('Time relative to target word (ms)','FontSize',13);
     ylabel('Amplitude (uV; negative up)','FontSize',13);
