@@ -1,37 +1,35 @@
-%% Copy to config_828_<SUBJECT>.m and edit once per participant.
+%% 905 CAR standard: copy to config_905_<SUBJECT>.m and edit per participant.
 
 cfg.subject = 'XX';
 cfg.behavior_subject = NaN;
 
 cfg.project_root = 'TODO_ABSOLUTE_N400_PROJECT_PATH';
-cfg.repo_root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+cfg.skill_root = 'TODO_ABSOLUTE_905_SKILL_DIRECTORY';
 cfg.eeglab_root = ...
     'TODO_ABSOLUTE_EEGLAB_PATH';
 
 cfg.input_dir = fullfile(cfg.project_root,'input_set');
 cfg.behavior_dir = fullfile(cfg.project_root,'behavior');
-cfg.bdf = fullfile(cfg.repo_root,'assets', ...
+cfg.bdf = fullfile(cfg.skill_root,'assets', ...
     'BDF_target_HC_LC_SNR_alltrials.txt');
 
-cfg.eeg_channels = 1:64;
-cfg.eog_channels = 65:66;
-cfg.trigger_channel = 67;
-cfg.m1_channel = 44;
-cfg.m2_channel = 45;
-cfg.aux_channels = 65:67;
+% Resolve every channel by label at runtime. Never enter channel numbers here.
+cfg.fixed_excluded_labels = {'M1','M2','CB1','CB2'};
+cfg.eog_labels = {'VEOG','HEOG'};
+cfg.trigger_label = 'TRIGGER';
 
-% Reference Gate A. Bad channels are scalp channels only and are recorded
-% here, excluded from ICA, then interpolated after ICA in Phase 5.
-cfg.bad_channel_candidates = [];
-cfg.bad_channels = [];
-cfg.reference_mode = 'average_mastoid'; % average_mastoid | m1 | m2
-cfg.reference_exception_reason = '';
+% Gate A decisions. Ordinary participant-specific bad scalp channels are
+% excluded from the initial CAR and ICA, then interpolated after ICA.
+cfg.bad_channel_candidate_labels = {};
+cfg.bad_channel_labels = {};
+cfg.reference_mode = 'common_average';
 cfg.reference_review_complete = false;
+cfg.final_car_for_all = true;
 
 cfg.analysis_rate = 250;
 cfg.analysis_highpass = 0.1;
 cfg.analysis_highpass_order = 2;
-% Locked 902 line-noise step. ERPLAB PMnotch must use Design='notch'.
+% Locked 905 line-noise step. ERPLAB PMnotch must use Design='notch'.
 cfg.line_notch_hz = 50;
 cfg.analysis_lowpass = 30;
 cfg.analysis_lowpass_order = 8;
@@ -59,9 +57,12 @@ cfg.continuous_segment_absolute_uv = 1000;
 cfg.continuous_segment_p2p_uv = 1500;
 cfg.continuous_segment_flat_fraction = 0.95;
 
-cfg.expected_channels = 67;
+cfg.expected_raw_channels = 67;
+cfg.expected_raw_scalp_channels = 64;
+cfg.expected_analysis_scalp_channels = 60;
+cfg.expected_analysis_channels = 63;
 cfg.expected_trials = 300;
 cfg.expected_bins = 10;
 cfg.expected_trials_per_bin = 30;
 
-run(fullfile(fileparts(mfilename('fullpath')),'refresh_828_config.m'));
+run(fullfile(fileparts(mfilename('fullpath')),'refresh_905_config.m'));

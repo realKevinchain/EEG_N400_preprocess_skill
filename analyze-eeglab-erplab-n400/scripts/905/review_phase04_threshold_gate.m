@@ -1,15 +1,22 @@
-%% Read-only 828update Phase 4 threshold Gate B helper.
+%% Read-only 905 Phase 4 threshold Gate B helper.
 
-run(fullfile(fileparts(mfilename('fullpath')),'init_828_runtime.m'));
+run(fullfile(fileparts(mfilename('fullpath')),'init_905_runtime.m'));
 trainingPath = fullfile(cfg.ica_dir,cfg.icatrain_set);
 assert(exist(trainingPath,'file') == 2,'Run Phase 4 once first.');
 TRAINING = pop_loadset('filename',cfg.icatrain_set,'filepath',cfg.ica_dir);
-stored = TRAINING.etc.update828_ica_training;
+stored = TRAINING.etc.n400_905_ica_training;
 rejectedTrials = double(stored.threshold_rejected_trials(:)');
 retainedTrials = double(stored.threshold_retained_trials(:)');
 
 SOURCE = pop_loadset('filename',cfg.preica_set,'filepath',cfg.continuous_dir);
-SOURCE = pop_basicfilter(SOURCE,cfg.ica_channels, ...
+eogChannels = n400u_channel_indices(SOURCE,cfg.eog_labels);
+triggerChannel = n400u_channel_indices(SOURCE,{cfg.trigger_label});
+scalpChannels = setdiff(1:SOURCE.nbchan,[eogChannels triggerChannel],'stable');
+badChannels = n400u_channel_indices(SOURCE,cfg.bad_channel_labels);
+icaChannels = setdiff(scalpChannels,badChannels,'stable');
+assert(isequal(upper(string(stored.ica_channel_labels)), ...
+    upper(string({SOURCE.chanlocs(icaChannels).labels}))));
+SOURCE = pop_basicfilter(SOURCE,icaChannels, ...
     'Filter','highpass','Design','butter','Cutoff',cfg.ica_highpass, ...
     'Order',cfg.ica_highpass_order,'RemoveDC','on','Boundary','boundary');
 SOURCE = pop_resample(SOURCE,cfg.ica_rate);
@@ -20,14 +27,22 @@ ranges = nan(cfg.expected_trials,2);
 recalculatedRejected = false(cfg.expected_trials,1);
 for trial = 1:cfg.expected_trials
     startItem = startItems(trial);
-    targetOffset = find(codes(startItem+1:end) == codes(startItem)+100,1);
-    assert(~isempty(targetOffset));
-    targetItem = startItem+targetOffset;
+    if trial < cfg.expected_trials
+        nextStartItem = startItems(trial+1);
+    else
+        nextStartItem = numel(codes)+1;
+    end
+    targetItems = find(codes(startItem+1:nextStartItem-1) == ...
+        codes(startItem)+100);
+    assert(isscalar(targetItems), ...
+        'Expected one target inside trial %d; found %d.', ...
+        trial,numel(targetItems));
+    targetItem = startItem+targetItems;
     firstPoint = max(1,ceil(double(SOURCE.event(startItem).latency)));
     lastPoint = min(SOURCE.pnts,ceil(double(SOURCE.event(targetItem).latency)+ ...
         cfg.ica_task_end_seconds*SOURCE.srate)-1);
     ranges(trial,:) = [firstPoint lastPoint];
-    segment = double(SOURCE.data(cfg.ica_channels,firstPoint:lastPoint));
+    segment = double(SOURCE.data(icaChannels,firstPoint:lastPoint));
     recalculatedRejected(trial) = any( ...
         segment(:) < cfg.ica_simple_threshold_uv(1) | ...
         segment(:) > cfg.ica_simple_threshold_uv(2));
@@ -44,12 +59,12 @@ fprintf('Rejected trials: '); fprintf('%d ',rejectedTrials);
 fprintf('\nRetained sample: '); fprintf('%d ',sampledRetained);
 fprintf('\nRead-only review: do not mark, delete, or save data.\n');
 RETAINED_REVIEW = localReviewDataset( ...
-    SOURCE,ranges,sampledRetained,cfg.ica_channels, ...
+    SOURCE,ranges,sampledRetained,icaChannels, ...
     sprintf('%s retained ICA sample',cfg.subject));
 pop_eegplot(RETAINED_REVIEW,1,1,0);
 if ~isempty(rejectedTrials)
     REJECTED_REVIEW = localReviewDataset( ...
-        SOURCE,ranges,rejectedTrials,cfg.ica_channels, ...
+        SOURCE,ranges,rejectedTrials,icaChannels, ...
         sprintf('%s rejected by +/-100 uV',cfg.subject));
     pop_eegplot(REJECTED_REVIEW,1,1,0);
 end

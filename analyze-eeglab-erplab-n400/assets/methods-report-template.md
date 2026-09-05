@@ -30,7 +30,7 @@
 - Channel locations and missing channels:
 - Resampling and anti-aliasing:
 - Analysis filter: 0.1-Hz HP, 50-Hz ERPLAB PMnotch (`Design='notch'`), 30-Hz LP; order/slope, direction, channels, DC handling; TRIGGER protection:
-- Initial and final reference:
+- Fixed exclusions (M1/M2/CB1/CB2), initial good-scalp CAR, and universal final 60-scalp-channel CAR:
 - EOG derivations:
 - Bad-channel criteria, participant-specific channels, and interpolation method/timing:
 - Manual inspection procedure:
@@ -54,7 +54,7 @@ For each choice, state `[BOOK]`, `[DERIVED]`, `[GENERAL]`, or `[DECIDE]`, plus s
 - Baseline interval and rationale:
 - Artifact algorithms, channels, windows, thresholds, steps, and flags:
 - Parameter-tuning rule and inspection procedure:
-- Gate D review-copy filename, `UPDATE MARKS` confirmation, reject-field audit, and reconciled epoch list:
+- Gate D `new.set`, `UPDATE MARKS` confirmation, reject-field audit, and reconciled epoch list:
 - Participant/trial exclusion rules and when fixed:
 - Accepted/rejected/invalid trials by participant/condition:
 - Averaging options and boundary handling:
@@ -84,8 +84,7 @@ For each choice, state `[BOOK]`, `[DERIVED]`, `[GENERAL]`, or `[DECIDE]`, plus s
 - Trial retention summary:
 - SME/aSME summary for the primary measure:
 - Waveform/difference-wave/scalp-distribution checks:
-- Official target-word figure scale (±20 µV), negative-up convention, and HC/LC N labels:
-- Optional separately named ±10 µV comparison and any clipping:
+- Separate fixed target-word figure scales (±20 µV and ±10 µV), negative-up convention, HC/LC N labels, and any ±10 µV clipping:
 - Sentence supplement: S1/S2 parameters, exact ledger match, edge coverage, and 20 PNG + 20 FIG verification:
 - ICA and ocular-correction checks:
 - Reproducibility rerun result:

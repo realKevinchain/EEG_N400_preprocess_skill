@@ -1,104 +1,91 @@
-# 902 / 828update Data Quality Checklist
+# 905 release checklist
 
-Store every result in the participant `result_update/<ID>/` QC, table, or log directories. A checked item requires evidence, not only a verbal assertion.
+## Stage 1
 
-## Stage 1: import and alignment
+- [ ] Raw/vendor files remain unchanged.
+- [ ] Imported SET has 67 unique labels and finite data.
+- [ ] M1, M2, CB1, CB2, VEOG, HEOG, and TRIGGER resolve exactly once by label.
+- [ ] The 60 retained scalp channels have finite coordinates.
+- [ ] Exactly 300 target codes match 300 behavior rows trial by trial.
+- [ ] Channel QC, segment QC, and Phase-1 PASS log exist.
 
-- [ ] Raw/vendor data remain unchanged.
-- [ ] Imported SET has 67 channels with unique locked labels.
-- [ ] EEG 1–64 have finite XYZ coordinates and finite samples.
-- [ ] M1/M2/EOG/TRIGGER indices and labels are correct.
-- [ ] Continuous EEG, spectra, triggers, flatlines, saturation, and discontinuities were inspected.
-- [ ] Exactly 300 target codes exist.
-- [ ] Behavior and EEG target codes agree trialwise for all 300 trials.
-- [ ] Channel QC, segment QC, and phase01 PASS log exist.
+## Stage 2
 
-## Stage 2: reference
+- [ ] Gate A ordinary bad channels were decided by the user for this participant.
+- [ ] Bad-channel decisions use labels, not inherited indices.
+- [ ] M1, M2, CB1, and CB2 were permanently removed before CAR.
+- [ ] The post-removal data contain 60 scalp plus three auxiliary channels.
+- [ ] Initial CAR used only good retained scalp channels.
+- [ ] Bad scalp, EOG, and trigger were excluded from the initial CAR.
+- [ ] Good-scalp CAR residual is within tolerance.
+- [ ] Auxiliary samples and events are unchanged.
+- [ ] Gate A record and Phase-2 PASS log exist.
 
-- [ ] M1 and M2 were reviewed with candidate and normal-comparison channels.
-- [ ] Confirmed `bad_channels` contain scalp channels only.
-- [ ] Average M1/M2 is used, or a single-side exception reason is recorded.
-- [ ] EEG 1–64 were rereferenced before filtering and ICA.
-- [ ] VEOG, HEOG, and TRIGGER remained pointwise unchanged.
-- [ ] Reference residual meets the script tolerance.
-- [ ] Events, channel labels, and dimensions remained unchanged.
-- [ ] Gate A decision and phase02 PASS log exist.
-
-## Stage 3: filtering
+## Stage 3
 
 - [ ] Output rate is 250 Hz.
-- [ ] EEG/EOG use the locked order: 0.1-Hz Butterworth HP, 50-Hz ERPLAB PMnotch with `Design='notch'`, then 30-Hz Butterworth LP.
+- [ ] EEG/EOG filter order is 0.1-Hz HP, 50-Hz PMnotch with `Design='notch'`, then 30-Hz LP.
 - [ ] TRIGGER was resampled but not filtered.
-- [ ] Filtering produced no NaN or Inf.
-- [ ] Reference residual and 300 target events remain valid.
-- [ ] Before/after waveforms, spectra, edges, EOG, M1/M2, CZ/CPZ/PZ were inspected.
-- [ ] Filter QC and phase03 PASS log exist.
+- [ ] Initial good-scalp CAR residual remains within tolerance.
+- [ ] All samples are finite and 300 targets remain.
+- [ ] Filter QC and Phase-3 PASS log exist.
 
-## Stage 4: ICA
+## Stage 4
 
-- [ ] Bad scalp channels and the zero single-reference channel are excluded as required.
-- [ ] Training copy uses 1-Hz high-pass and 100 Hz.
-- [ ] Task windows run from trial start through target +1 s.
-- [ ] Every ±100 µV rejected segment and the fixed retained sample were reviewed.
-- [ ] Numerical rank equals the reference/channel-set expectation.
-- [ ] Explicit PCA rank is used when rank is below ICA channel count.
-- [ ] Fixed-seed extended Infomax completed.
-- [ ] Training and target reference, channel order, and `icachansind` match.
-- [ ] IC maps, activations, spectra, continuous data, and EOG relationships were reviewed.
-- [ ] Removed ICs and rationale are recorded; zero removal is explicitly reviewable.
-- [ ] Before/after ICA signals were compared.
-- [ ] Threshold QC and phase04 PASS log exist.
+- [ ] ICA includes only good retained scalp channels.
+- [ ] Fixed exclusions, ordinary bad scalp, EOG, and trigger are absent from ICA.
+- [ ] Training data use 1-Hz HP, 100 Hz, and trial-start-through-target+1-s windows.
+- [ ] Every ±100 µV candidate and the retained sample were reviewed at Gate B.
+- [ ] Numerical rank equals number of ICA channels minus one.
+- [ ] Extended Infomax used explicit PCA rank and the fixed seed.
+- [ ] Training and formal reference, labels, order, and `icachansind` match.
+- [ ] Gate C maps, spectra, activations, continuous data, and EOG relationships were reviewed.
+- [ ] Removed ICs came from the user; ICLabel was support only.
+- [ ] ICA-clean output reloads exactly and Phase-4 PASS log exists.
 
-## Stage 5: interpolation, bins, epochs, and artifacts
+## Stage 5
 
-- [ ] Only Gate A bad scalp channels were spherically interpolated.
-- [ ] M1/M2/EOG/TRIGGER were not interpolated.
-- [ ] Invalid ICA matrices were cleared and decision metadata retained.
-- [ ] Ten target bins contain exactly 30 trials each.
-- [ ] Event codes 98/99 do not enter target bins.
-- [ ] One formal epoch dataset contains 300 trials.
-- [ ] Epoch window is nominally −200 to 800 ms at 250 Hz.
-- [ ] Every epoch uses mandatory −200 to 0 ms baseline.
-- [ ] No unbaselined formal epoch branch exists.
-- [ ] All 300 epochs were reviewed condition-blind.
-- [ ] Simple Voltage Threshold, if used, served only as a candidate screen.
-- [ ] The user manually reconciled marks, clicked `UPDATE MARKS`, and never used `REJECT` to delete epochs.
-- [ ] A separate `<ID>_gateD_manual_review.set` copy exists; the formal baseline epoch file was not overwritten.
-- [ ] `rejmanual`, `rejmanualE`, `rejthresh`, other reject fields, and event flags were audited; any disagreement was resolved with the user before entering the unified list.
-- [ ] Unified EEG artifact bit 1 agrees across reject, epoch, event, and EVENTLIST.
-- [ ] No trial was physically deleted.
-- [ ] Artifact decisions table and phase05 PASS log exist.
+- [ ] Only ordinary Gate A bad scalp channels were interpolated.
+- [ ] M1, M2, CB1, and CB2 were not interpolated.
+- [ ] ICA matrices were cleared after ICA cleaning/interpolation.
+- [ ] Final CAR was executed for this participant even if no interpolation was needed.
+- [ ] Final CAR contains all 60 retained scalp channels and excludes all auxiliary channels.
+- [ ] Final scalp mean is within tolerance and auxiliary samples are unchanged.
+- [ ] Final-CAR continuous checkpoint exists.
+- [ ] Ten bins contain 30 original trials each; codes 98/99 do not enter target bins.
+- [ ] One formal 300-trial epoch set uses nominal −200 to 800 ms and −200 to 0 ms baseline.
+- [ ] Gate D was condition-blind; Simple Voltage Threshold was only a screen.
+- [ ] The user clicked `UPDATE MARKS`, never deleted trials with `REJECT`, and saved `new.set`.
+- [ ] All reject fields/event flags were audited and one list was reconciled with the user.
+- [ ] EEG artifact bit 1 is synchronized and all 300 physical epochs remain.
+- [ ] Phase-5 PASS log exists.
 
-## Stage 6: behavior and ERP
+## Stage 6
 
-- [ ] Behavior target codes and bins re-match all EEG epochs.
-- [ ] Bit 1 means EEG artifact only.
-- [ ] Bit 2 means behavior error only.
-- [ ] Primary acceptance equals EEG-clean and behavior-correct.
-- [ ] All-clean acceptance equals EEG-clean regardless of behavior.
-- [ ] Ledger and bin summary reconcile every trial and count.
-- [ ] Both ERPs include SEM/dataquality information.
-- [ ] Saved and reloaded bindata, binerror, dataquality, time, and counts are identical.
-- [ ] CZ and centroparietal ROI plots use LC−HC, fixed `[-20 20]` µV, and negative up.
-- [ ] Every HC/LC panel displays both accepted trial counts.
-- [ ] Any requested `[-10 10]` comparison used separate filenames, did not overwrite official plots, and was labelled exploratory if clipped.
-- [ ] Prestimulus baseline, 300–500 ms morphology, late drift, trial balance, and anomalous conditions were reviewed.
-- [ ] Phase06 PASS log exists.
+- [ ] Behavior codes and bins rematch all epochs.
+- [ ] Bit 1 means EEG artifact; bit 2 means behavior error.
+- [ ] Primary acceptance is EEG-clean plus behavior-correct.
+- [ ] All-clean acceptance is EEG-clean regardless of behavior.
+- [ ] Ledger and per-bin summary reconcile every trial.
+- [ ] Total EEG-artifact rejection and primary exclusion rates are reported.
+- [ ] Saved/reloaded ERP waveform, error, data-quality, time, and count fields match.
+- [ ] Separate fixed ±20 and ±10 target-word figures exist for both inclusion modes.
+- [ ] All panels use negative up and show HC N plus LC N.
+- [ ] Phase-6 PASS log exists.
 
-## Post-Stage-6 sentence deliverable
+## Sentence branch
 
-- [ ] S1 uses sentence-onset `[-200 4000]` ms epochs and `[-200 0]` ms sentence-onset baseline.
-- [ ] S2 performs no re-baselining and uses fixed `[-2300 800]` ms display.
-- [ ] Edge averaging uses `omitnan` and variable coverage is documented.
-- [ ] Artifact and behavior inclusion matches the official Stage-6 ledger row by row and by bin.
-- [ ] Exactly 20 PNG and 20 FIG files exist under `sentence_epochs/word_aligned_plots/`.
-- [ ] Every sentence FIG uses fixed `[-20 20]` µV, negative up, and HC/LC N labels.
-- [ ] The sentence branch did not modify or overwrite any Phase 01–06 output.
+- [ ] Source is the 905 final-CAR continuous checkpoint.
+- [ ] S1 has 300 sentence-onset epochs, −200 to 4000 ms, with −200 to 0 ms baseline.
+- [ ] S2 does not rebaseline and displays fixed −2300 to 800 ms.
+- [ ] Edge averaging uses `omitnan`.
+- [ ] Trial inclusion matches the Stage-6 ledger row by row and by bin.
+- [ ] Sentence figures are fixed ±20 µV, negative up, and show HC/LC N.
+- [ ] Sentence outputs did not modify Stage 1–6 outputs.
 
-## Cohort release
+## Cohort
 
-- [ ] The 01B pilot record is retained as validation evidence but its channel, IC, and epoch numbers are not copied to later participants.
-- [ ] Rerunning unchanged inputs/config does not overwrite outputs.
-- [ ] Every participant has the minimum deliverables listed in the full guide.
-- [ ] No unresolved TODO paths, reference choices, IC decisions, or artifact decisions remain.
-- [ ] No 828update output was written to legacy `derivatives/` or `no-ica/` roots.
+- [ ] Every participant was rerun from raw import under 905; no 902 SET was used as a stage input.
+- [ ] No participant-specific gate decision was copied to another participant.
+- [ ] All outputs remain isolated under `<ID>/905_car/`.
+- [ ] No unresolved TODO path or gate remains.

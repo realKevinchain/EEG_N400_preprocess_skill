@@ -1,23 +1,23 @@
-%% Supplemental (NOT part of the locked 828update six-stage output):
+%% Supplemental (NOT part of the locked 905 six-stage output):
 % Sentence-onset-locked epoch, -200 to 4000 ms, for whole-sentence viewing.
-% Reuses the already-referenced/filtered/ICA-cleaned/interpolated continuous
+% Reuses the filtered/ICA-cleaned/interpolated/final-CAR continuous
 % data produced by phase05_epoch_artifact.m; does not touch or duplicate the
 % official target-word-locked -200/800 ms epoch or its outputs.
 
-run(fullfile(fileparts(mfilename('fullpath')),'init_828_runtime.m'));
+run(fullfile(fileparts(mfilename('fullpath')),'init_905_runtime.m'));
 
 sentenceEpochMs = [-200 4000];
 sentenceBaselineMs = [-200 0];
 
 outDir = fullfile(cfg.result_root,'sentence_epochs');
 if exist(outDir,'dir') ~= 7, mkdir(outDir); end
-epochSetName = sprintf('%s_828update_%s_sentence_epochs_baseline_pre200.set', ...
+epochSetName = sprintf('%s_905_%s_sentence_epochs_baseline_pre200.set', ...
     cfg.subject,cfg.reference_tag);
 epochPath = fullfile(outDir,epochSetName);
 latencyCsvPath = fullfile(outDir,sprintf( ...
-    '%s_828update_%s_sentence_target_latency.csv',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_target_latency.csv',cfg.subject,cfg.reference_tag));
 logPath = fullfile(outDir,sprintf( ...
-    '%s_828update_%s_sentence_epoch_log.txt',cfg.subject,cfg.reference_tag));
+    '%s_905_%s_sentence_epoch_log.txt',cfg.subject,cfg.reference_tag));
 
 present = [exist(epochPath,'file') == 2,exist(latencyCsvPath,'file') == 2, ...
     exist(logPath,'file') == 2];
@@ -28,7 +28,7 @@ end
 assert(~any(present), ...
     'Partial sentence-epoch output exists; inspect before rerunning.');
 
-EEG = pop_loadset('filename',cfg.interpolated_set,'filepath',cfg.continuous_dir);
+EEG = pop_loadset('filename',cfg.final_car_set,'filepath',cfg.continuous_dir);
 EEG = eeg_checkset(EEG);
 
 rawCodes = arrayfun(@(x) n400u_event_code(x.type),EEG.event);
@@ -44,16 +44,15 @@ for i = 1:cfg.expected_trials
     si = startItems(i);
     targetCode = rawCodes(si)+100;
     if i < cfg.expected_trials
-        trialEnd = startItems(i+1)-1;
+        nextStartItem = startItems(i+1);
     else
-        trialEnd = numel(rawCodes);
+        nextStartItem = numel(rawCodes)+1;
     end
-    trialItems = (si+1):trialEnd;
-    targetItems = trialItems(rawCodes(trialItems) == targetCode);
+    targetItems = find(rawCodes(si+1:nextStartItem-1) == targetCode);
     assert(isscalar(targetItems), ...
-        'Expected one target in sentence trial %d, found %d.', ...
+        'Expected one target inside sentence trial %d; found %d.', ...
         i,numel(targetItems));
-    ti = targetItems(1);
+    ti = si+targetItems;
     targetLatencyMs(i) = (lat(ti)-lat(si))/EEG.srate*1000;
 end
 assert(max(targetLatencyMs) <= sentenceEpochMs(2)-800, ...
@@ -98,7 +97,7 @@ writetable(LATENCY,latencyCsvPath);
 fid = fopen(logPath,'w');
 fprintf(fid,'Sentence-onset epoch (supplemental; not part of the locked six-stage output)\n');
 fprintf(fid,'Participant: %s\n',cfg.subject);
-fprintf(fid,'Source: %s\n',fullfile(cfg.continuous_dir,cfg.interpolated_set));
+fprintf(fid,'Source: %s\n',fullfile(cfg.continuous_dir,cfg.final_car_set));
 fprintf(fid,'Window: %d to %d ms; baseline %d to %d ms\n', ...
     sentenceEpochMs(1),sentenceEpochMs(2),sentenceBaselineMs(1),sentenceBaselineMs(2));
 fprintf(fid,'Trials: %d\n',SENT.trials);
