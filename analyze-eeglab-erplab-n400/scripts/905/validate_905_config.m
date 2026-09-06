@@ -27,11 +27,11 @@ assert(~contains(cfg.project_root,'TODO_') && ...
     'Replace TODO paths in the participant config before running.');
 assert(exist(cfg.skill_root,'dir') == 7,'905 skill directory not found.');
 assert(exist(cfg.bdf,'file') == 2,'Locked BDF file not found.');
-assert(contains(cfg.result_root,[filesep 'result_update' filesep]), ...
-    'result_root must be N400_project/result_update/<ID>.');
+assert(contains(cfg.result_root,[filesep 'result_905_car' filesep]), ...
+    'result_root must be N400_project/result_905_car/<ID>.');
 assert(~contains(cfg.result_root,[filesep 'derivatives' filesep]));
 assert(~contains(cfg.result_root,[filesep 'no-ica' filesep]));
-assert(contains(cfg.result_root,[filesep '905_car']));
+assert(~contains(cfg.result_root,[filesep '905_car' filesep]));
 assert(isequal(upper(string(cfg.fixed_excluded_labels)), ...
     ["M1" "M2" "CB1" "CB2"]));
 assert(isequal(upper(string(cfg.eog_labels)),["VEOG" "HEOG"]));

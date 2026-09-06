@@ -53,4 +53,4 @@ Create one PNG and one FIG for each combination of:
 
 This gives 20 PNG plus 20 FIG files. Each single-panel figure shows HC, LC, and LC−HC; uses fixed `[-20 20]` µV with negative upward; and displays HC N and LC N. Never autoscale a participant or panel, and do not overlay the target-word ERP in saved sentence figures.
 
-All outputs remain under `<ID>/905_car/sentence_epochs/`. The carried-forward sentence algorithm must be runtime-validated anew on 905 final-CAR data; archived 902 outputs are not 905 validation evidence.
+All outputs remain under `result_905_car/<ID>/sentence_epochs/`. The carried-forward sentence algorithm must be runtime-validated anew on 905 final-CAR data; archived 902 outputs are not 905 validation evidence.

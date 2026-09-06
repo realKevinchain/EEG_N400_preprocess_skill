@@ -4,7 +4,7 @@ assert(exist('cfg','var') == 1);
 assert(strcmp(cfg.reference_mode,'common_average'));
 referenceTag = 'car';
 
-cfg.result_root = fullfile(cfg.project_root,'result_update',cfg.subject,'905_car');
+cfg.result_root = fullfile(cfg.project_root,'result_905_car',cfg.subject);
 cfg.continuous_dir = fullfile(cfg.result_root,'continuous');
 cfg.ica_dir = fullfile(cfg.result_root,'ica');
 cfg.epochs_dir = fullfile(cfg.result_root,'epochs');

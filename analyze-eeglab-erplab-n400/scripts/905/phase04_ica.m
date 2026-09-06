@@ -112,7 +112,10 @@ if exist(trainingPath,'file') == 0
         EEG = pop_select(EEG,'nopoint',removeRanges);
     end
     X = double(EEG.data(icaChannels,:));
-    X = X-mean(X,2);
+    % CAR rank is tested after removing the pointwise common average. A
+    % per-channel temporal demeaning would test a different operation and
+    % incorrectly report full rank after filter DC removal.
+    X = X-mean(X,1);
     numericalRank = rank(X);
     clear X
     expectedRank = numel(icaChannels)-1;

@@ -25,7 +25,7 @@ Treat 905 as the active study workflow. Keep earlier versions archived and never
 5. Interpolate ordinary bad scalp channels, apply the universal final 60-channel CAR, create the EventList and 10 bins, extract one −200 to 800 ms target-word epoch set with −200 to 0 ms baseline, and write reviewed EEG artifacts to bit 1 without deleting epochs.
 6. Write behavior errors to bit 2 in memory, create primary correct-clean and all-clean ERPs, report rejection and per-bin retention, reload-verify the ERPs, and create fixed-scale plots.
 
-Use `scripts/905/config_905_subject_template.m` for each participant and write only under `N400_project/result_update/<ID>/905_car/`. Reload the participant config before every stage or gate helper. Never copy a bad-channel list, ICA component list, or rejected-epoch list between participants.
+Use `scripts/905/config_905_subject_template.m` for each participant and write only under `N400_project/result_905_car/<ID>/`. Keep raw imports in `N400_project/input_set/`; any coordinate-complete working copy belongs under `N400_project/working_905/<ID>/input_set/`, never inside a result directory. Reload the participant config before every stage or gate helper. Never copy a bad-channel list, ICA component list, or rejected-epoch list between participants.
 
 ## Keep all four gates human-controlled
 

@@ -87,5 +87,5 @@
 
 - [ ] Every participant was rerun from raw import under 905; no 902 SET was used as a stage input.
 - [ ] No participant-specific gate decision was copied to another participant.
-- [ ] All outputs remain isolated under `<ID>/905_car/`.
+- [ ] All outputs remain isolated under `result_905_car/<ID>/`.
 - [ ] No unresolved TODO path or gate remains.

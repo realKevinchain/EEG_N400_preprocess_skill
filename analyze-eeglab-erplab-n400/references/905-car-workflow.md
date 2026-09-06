@@ -52,8 +52,13 @@ Never replace these labels with numeric indices. The runtime resolves labels aft
 All outputs belong under:
 
 ```text
-N400_project/result_update/<ID>/905_car/
+N400_project/result_905_car/<ID>/
 ```
+
+Keep the original imports in `N400_project/input_set/`. If channel coordinates
+must be completed, store that temporary working copy under
+`N400_project/working_905/<ID>/input_set/`; never create an `input_set/`
+directory inside a result directory.
 
 Existing files stop a stage instead of being overwritten.
 

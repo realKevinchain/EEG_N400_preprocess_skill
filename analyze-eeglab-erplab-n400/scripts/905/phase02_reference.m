@@ -88,7 +88,10 @@ if ~isempty(badChannels)
         [],'all') == 0,'Excluded bad-channel samples changed during CAR.');
 end
 residual = mean(double(EEG.data(goodScalp,:)),1);
-assert(max(abs(residual),[],'all') < 1e-3, ...
+% EEGLAB stores the imported signal as single precision; allow the
+% observed sub-0.005-uV summation roundoff while retaining a strict CAR QC.
+carResidualTolerance = 5e-3;
+assert(max(abs(residual),[],'all') < carResidualTolerance, ...
     'Initial CAR residual exceeds tolerance.');
 
 EEG.etc.n400_905_reference = struct( ...

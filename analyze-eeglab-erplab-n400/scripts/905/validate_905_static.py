@@ -77,7 +77,7 @@ require("cfg.reference_mode = 'common_average'" in config
         "CAR contract is not locked")
 require("bad_channel_labels" in config and "bad_channel_candidate_labels" in config,
         "Bad channels are not label-based")
-require("result_update" in refresh and "905_car" in refresh,
+require("result_905_car" in refresh and "result_update" not in refresh,
         "905 output root is not isolated")
 require("cfg.reference_tag = referenceTag" in refresh
         and "referenceTag = 'car'" in refresh,
